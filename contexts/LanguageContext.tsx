@@ -1,6 +1,7 @@
 
 import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 import { translations } from '../utils/translations';
+import { safeStorage } from '../utils/storage';
 
 type Language = 'en' | 'bn';
 
@@ -14,14 +15,14 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [language, setLanguage] = useState<Language>(() => {
-    const savedLang = localStorage.getItem('language') as Language;
+    const savedLang = safeStorage.getItem('language') as Language;
     return savedLang || 'en';
   });
 
   const toggleLanguage = () => {
     const newLang = language === 'en' ? 'bn' : 'en';
     setLanguage(newLang);
-    localStorage.setItem('language', newLang);
+    safeStorage.setItem('language', newLang);
   };
 
   const t = useCallback((key: keyof typeof translations.en): string => {

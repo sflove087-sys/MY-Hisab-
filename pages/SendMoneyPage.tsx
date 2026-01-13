@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { UserType } from '../types';
 import PageHeader from '../components/common/PageHeader';
 import { ArrowRightIcon, UserIcon } from '../components/Icons';
+import { safeStorage } from '../utils/storage';
 
 interface Recipient {
   name: string;
@@ -32,17 +33,26 @@ const SendMoneyPage: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Load recent recipients from localStorage
-    const storedRecents = localStorage.getItem('recentRecipients');
-    if (storedRecents) {
-      setRecentRecipients(JSON.parse(storedRecents));
+    // Load recent recipients from safeStorage
+    try {
+      const storedRecents = safeStorage.getItem('recentRecipients');
+      if (storedRecents) {
+        setRecentRecipients(JSON.parse(storedRecents));
+      }
+    } catch (e) {
+      console.error("Failed to load/parse recent recipients:", e);
+      safeStorage.removeItem('recentRecipients');
     }
   }, []);
 
   const saveRecentRecipient = (recipient: Recipient) => {
-    const updatedRecents = [recipient, ...recentRecipients.filter(r => r.mobile !== recipient.mobile)].slice(0, 5);
-    setRecentRecipients(updatedRecents);
-    localStorage.setItem('recentRecipients', JSON.stringify(updatedRecents));
+    try {
+      const updatedRecents = [recipient, ...recentRecipients.filter(r => r.mobile !== recipient.mobile)].slice(0, 5);
+      setRecentRecipients(updatedRecents);
+      safeStorage.setItem('recentRecipients', JSON.stringify(updatedRecents));
+    } catch (e) {
+      console.error("Failed to save recent recipients:", e);
+    }
   };
 
 

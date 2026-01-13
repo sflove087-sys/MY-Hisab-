@@ -7,6 +7,7 @@ import Logo from '../components/Logo';
 import { UserIcon } from '../components/Icons';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
+import { safeStorage } from '../utils/storage';
 
 const LoginPage: React.FC = () => {
   const [lastActiveUser, setLastActiveUser] = useState<{name: string; mobile: string} | null>(null);
@@ -20,7 +21,7 @@ const LoginPage: React.FC = () => {
 
   useEffect(() => {
     try {
-      const storedUser = localStorage.getItem('lastActiveUser');
+      const storedUser = safeStorage.getItem('lastActiveUser');
       if (storedUser) {
         const parsedUser = JSON.parse(storedUser);
         setLastActiveUser(parsedUser);
@@ -28,7 +29,7 @@ const LoginPage: React.FC = () => {
       }
     } catch (e) {
       console.error("Failed to parse last active user:", e);
-      localStorage.removeItem('lastActiveUser'); // Clear corrupted data
+      safeStorage.removeItem('lastActiveUser'); // Clear corrupted data
     }
   }, []);
 
@@ -56,7 +57,7 @@ const LoginPage: React.FC = () => {
   };
 
   const handleSwitchAccount = () => {
-    localStorage.removeItem('lastActiveUser');
+    safeStorage.removeItem('lastActiveUser');
     setLastActiveUser(null);
     setLoginIdentifier('');
     setPassword('');

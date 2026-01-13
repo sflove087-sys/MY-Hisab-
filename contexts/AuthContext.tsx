@@ -2,6 +2,7 @@
 import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 import { User } from '../types';
 import { googleSheetService } from '../services/googleSheetService';
+import { safeStorage } from '../utils/storage';
 
 interface AuthContextType {
   user: User | null;
@@ -15,11 +16,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
     try {
-      const savedUser = localStorage.getItem('user');
+      const savedUser = safeStorage.getItem('user');
       return savedUser ? JSON.parse(savedUser) : null;
     } catch (error) {
-      console.error("Failed to load user from localStorage:", error);
-      localStorage.removeItem('user');
+      console.error("Failed to load user from safeStorage:", error);
+      safeStorage.removeItem('user');
       return null;
     }
   });
@@ -28,9 +29,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const loggedInUser = await googleSheetService.loginUser(identifier, password);
     if (loggedInUser) {
       setUser(loggedInUser);
-      localStorage.setItem('user', JSON.stringify(loggedInUser));
+      safeStorage.setItem('user', JSON.stringify(loggedInUser));
       try {
-        localStorage.setItem('lastActiveUser', JSON.stringify({ name: loggedInUser.name, mobile: loggedInUser.mobile }));
+        safeStorage.setItem('lastActiveUser', JSON.stringify({ name: loggedInUser.name, mobile: loggedInUser.mobile }));
       } catch (error) {
         console.error("Failed to save last active user:", error);
       }
@@ -40,8 +41,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('user');
-    localStorage.removeItem('lastActiveUser');
+    safeStorage.removeItem('user');
+    safeStorage.removeItem('lastActiveUser');
   };
   
   const refreshUser = useCallback(async () => {
@@ -50,7 +51,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const refreshedUser = await googleSheetService.getUserById(user.id);
         if (refreshedUser) {
           setUser(refreshedUser);
-          localStorage.setItem('user', JSON.stringify(refreshedUser));
+          safeStorage.setItem('user', JSON.stringify(refreshedUser));
         }
       } catch (error) {
         console.error("Failed to refresh user data:", error);

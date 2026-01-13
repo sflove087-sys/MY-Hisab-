@@ -1,6 +1,7 @@
 
 import React, { createContext, useState, useContext, ReactNode, useEffect, useMemo } from 'react';
 import { Notification, mockNotifications } from '../utils/notifications';
+import { safeStorage } from '../utils/storage';
 
 interface NotificationContextType {
   notifications: Notification[];
@@ -15,20 +16,20 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [notifications, setNotifications] = useState<Notification[]>(() => {
     try {
-      const savedNotifications = localStorage.getItem('notifications');
+      const savedNotifications = safeStorage.getItem('notifications');
       return savedNotifications ? JSON.parse(savedNotifications) : mockNotifications;
     } catch (error) {
-      console.error("Failed to load notifications from localStorage:", error);
-      localStorage.removeItem('notifications');
+      console.error("Failed to load notifications from safeStorage:", error);
+      safeStorage.removeItem('notifications');
       return mockNotifications; // Fallback to default
     }
   });
 
   useEffect(() => {
     try {
-      localStorage.setItem('notifications', JSON.stringify(notifications));
+      safeStorage.setItem('notifications', JSON.stringify(notifications));
     } catch (error) {
-      console.error("Failed to save notifications to localStorage:", error);
+      console.error("Failed to save notifications to safeStorage:", error);
     }
   }, [notifications]);
 
@@ -44,7 +45,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
   const clearNotifications = () => {
     setNotifications([]);
-    localStorage.removeItem('notifications');
+    safeStorage.removeItem('notifications');
   };
 
   return (

@@ -1,6 +1,7 @@
 
 import React, { createContext, useState, useContext, ReactNode, useEffect, useMemo } from 'react';
 import { ColorThemeName, themes, DesignStyle } from '../utils/themes';
+import { safeStorage } from '../utils/storage';
 
 type Mode = 'light' | 'dark';
 
@@ -17,20 +18,20 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [mode, setMode] = useState<Mode>(() => {
     try {
-      const savedMode = localStorage.getItem('themeMode') as Mode;
+      const savedMode = safeStorage.getItem('themeMode') as Mode;
       return savedMode || 'light';
     } catch (error) {
-      console.error("Failed to load theme mode from localStorage:", error);
+      console.error("Failed to load theme mode from safeStorage:", error);
       return 'light';
     }
   });
 
   const [colorTheme, setColorThemeState] = useState<ColorThemeName>(() => {
     try {
-      const savedColorTheme = localStorage.getItem('colorTheme') as ColorThemeName;
+      const savedColorTheme = safeStorage.getItem('colorTheme') as ColorThemeName;
       return savedColorTheme || 'nagad';
     } catch (error) {
-      console.error("Failed to load color theme from localStorage:", error);
+      console.error("Failed to load color theme from safeStorage:", error);
       return 'nagad';
     }
   });
@@ -39,7 +40,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   useEffect(() => {
     try {
-      localStorage.setItem('themeMode', mode);
+      safeStorage.setItem('themeMode', mode);
       const root = document.documentElement;
       if (mode === 'dark') {
         root.classList.add('dark');
@@ -47,18 +48,18 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         root.classList.remove('dark');
       }
     } catch (error) {
-      console.error("Failed to save theme mode to localStorage:", error);
+      console.error("Failed to save theme mode to safeStorage:", error);
     }
   }, [mode]);
 
   useEffect(() => {
     try {
-      localStorage.setItem('colorTheme', colorTheme);
+      safeStorage.setItem('colorTheme', colorTheme);
       const root = document.documentElement;
       const themeProperties = themes[colorTheme] || themes['nagad'];
       root.style.setProperty('--color-primary-hsl', themeProperties.primary);
     } catch (error) {
-      console.error("Failed to save color theme to localStorage:", error);
+      console.error("Failed to save color theme to safeStorage:", error);
     }
   }, [colorTheme]);
 
