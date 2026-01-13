@@ -25,7 +25,6 @@ const LoginPage: React.FC = () => {
       if (storedUser) {
         const parsedUser = JSON.parse(storedUser);
         setLastActiveUser(parsedUser);
-        setLoginIdentifier(parsedUser.mobile); // Pre-fill identifier for submission
       }
     } catch (e) {
       console.error("Failed to parse last active user:", e);
@@ -38,18 +37,24 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
     setError('');
 
-    if (!loginIdentifier || !password) {
+    // If a remembered user exists, use their mobile number for login.
+    // Otherwise, use the value from the text input field.
+    const identifierToUse = lastActiveUser ? lastActiveUser.mobile : loginIdentifier;
+
+    if (!identifierToUse || !password) {
       setError(language === 'bn' ? 'মোবাইল/ইমেল এবং পিন দিন।' : 'Please enter mobile/email and PIN.');
       setIsLoading(false);
       return;
     }
 
     try {
-      const user = await login(loginIdentifier, password);
+      const user = await login(identifierToUse, password);
       if (user) {
-        // If the login was successful and it was for a different user
-        // (via the switch account flow), update the last active user.
-        setLastActiveUser({ name: user.name, mobile: user.mobile });
+        // If login was for a different user (via switch account), update UI.
+        // Persistence is handled by the login function in AuthContext.
+        if (!lastActiveUser || lastActiveUser.mobile !== user.mobile) {
+            setLastActiveUser({ name: user.name, mobile: user.mobile });
+        }
       } else {
         setError(language === 'bn' ? 'মোবাইল/ইমেল বা পিন ভুল।' : 'Incorrect mobile/email or PIN.');
       }
