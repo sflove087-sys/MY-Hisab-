@@ -34,8 +34,8 @@ class GeminiService {
     }
     
     try {
-      // Dynamically import the library HERE, at the very last moment.
-      const { GoogleGenAI } = await import('@google/genai');
+      // Dynamically import the library using its full URL.
+      const { GoogleGenAI } = await import('https://esm.sh/@google/genai@1.35.0');
       this.ai = new GoogleGenAI({ apiKey: this.apiKey });
     } catch (error) {
        console.error("Failed to dynamically import or initialize GoogleGenAI:", error);
