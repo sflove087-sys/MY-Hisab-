@@ -14,12 +14,22 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 
 export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [notifications, setNotifications] = useState<Notification[]>(() => {
-    const savedNotifications = localStorage.getItem('notifications');
-    return savedNotifications ? JSON.parse(savedNotifications) : mockNotifications;
+    try {
+      const savedNotifications = localStorage.getItem('notifications');
+      return savedNotifications ? JSON.parse(savedNotifications) : mockNotifications;
+    } catch (error) {
+      console.error("Failed to load notifications from localStorage:", error);
+      localStorage.removeItem('notifications');
+      return mockNotifications; // Fallback to default
+    }
   });
 
   useEffect(() => {
-    localStorage.setItem('notifications', JSON.stringify(notifications));
+    try {
+      localStorage.setItem('notifications', JSON.stringify(notifications));
+    } catch (error) {
+      console.error("Failed to save notifications to localStorage:", error);
+    }
   }, [notifications]);
 
   const unreadCount = useMemo(() => notifications.filter(n => !n.read).length, [notifications]);

@@ -14,8 +14,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
-    const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser) : null;
+    try {
+      const savedUser = localStorage.getItem('user');
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch (error) {
+      console.error("Failed to load user from localStorage:", error);
+      localStorage.removeItem('user');
+      return null;
+    }
   });
 
   const login = async (identifier: string, password: string): Promise<User | null> => {
@@ -23,7 +29,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (loggedInUser) {
       setUser(loggedInUser);
       localStorage.setItem('user', JSON.stringify(loggedInUser));
-      localStorage.setItem('lastActiveUser', JSON.stringify({ name: loggedInUser.name, mobile: loggedInUser.mobile }));
+      try {
+        localStorage.setItem('lastActiveUser', JSON.stringify({ name: loggedInUser.name, mobile: loggedInUser.mobile }));
+      } catch (error) {
+        console.error("Failed to save last active user:", error);
+      }
     }
     return loggedInUser;
   };
@@ -36,10 +46,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   const refreshUser = useCallback(async () => {
     if (user) {
-      const refreshedUser = await googleSheetService.getUserById(user.id);
-      if (refreshedUser) {
-        setUser(refreshedUser);
-        localStorage.setItem('user', JSON.stringify(refreshedUser));
+      try {
+        const refreshedUser = await googleSheetService.getUserById(user.id);
+        if (refreshedUser) {
+          setUser(refreshedUser);
+          localStorage.setItem('user', JSON.stringify(refreshedUser));
+        }
+      } catch (error) {
+        console.error("Failed to refresh user data:", error);
+        // Optional: handle user refresh failure, e.g., by logging them out
+        // logout();
       }
     }
   }, [user]);

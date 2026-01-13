@@ -19,11 +19,16 @@ const LoginPage: React.FC = () => {
   const { language, toggleLanguage, t } = useLanguage();
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('lastActiveUser');
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      setLastActiveUser(parsedUser);
-      setLoginIdentifier(parsedUser.mobile); // Pre-fill identifier for submission
+    try {
+      const storedUser = localStorage.getItem('lastActiveUser');
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        setLastActiveUser(parsedUser);
+        setLoginIdentifier(parsedUser.mobile); // Pre-fill identifier for submission
+      }
+    } catch (e) {
+      console.error("Failed to parse last active user:", e);
+      localStorage.removeItem('lastActiveUser'); // Clear corrupted data
     }
   }, []);
 

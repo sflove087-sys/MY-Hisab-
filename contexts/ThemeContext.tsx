@@ -16,32 +16,50 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [mode, setMode] = useState<Mode>(() => {
-    const savedMode = localStorage.getItem('themeMode') as Mode;
-    return savedMode || 'light';
+    try {
+      const savedMode = localStorage.getItem('themeMode') as Mode;
+      return savedMode || 'light';
+    } catch (error) {
+      console.error("Failed to load theme mode from localStorage:", error);
+      return 'light';
+    }
   });
 
   const [colorTheme, setColorThemeState] = useState<ColorThemeName>(() => {
-    const savedColorTheme = localStorage.getItem('colorTheme') as ColorThemeName;
-    return savedColorTheme || 'nagad';
+    try {
+      const savedColorTheme = localStorage.getItem('colorTheme') as ColorThemeName;
+      return savedColorTheme || 'nagad';
+    } catch (error) {
+      console.error("Failed to load color theme from localStorage:", error);
+      return 'nagad';
+    }
   });
 
-  const designStyle = useMemo(() => themes[colorTheme].designStyle, [colorTheme]);
+  const designStyle = useMemo(() => themes[colorTheme]?.designStyle || themes['nagad'].designStyle, [colorTheme]);
 
   useEffect(() => {
-    localStorage.setItem('themeMode', mode);
-    const root = document.documentElement;
-    if (mode === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
+    try {
+      localStorage.setItem('themeMode', mode);
+      const root = document.documentElement;
+      if (mode === 'dark') {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
+    } catch (error) {
+      console.error("Failed to save theme mode to localStorage:", error);
     }
   }, [mode]);
 
   useEffect(() => {
-    localStorage.setItem('colorTheme', colorTheme);
-    const root = document.documentElement;
-    const themeProperties = themes[colorTheme];
-    root.style.setProperty('--color-primary-hsl', themeProperties.primary);
+    try {
+      localStorage.setItem('colorTheme', colorTheme);
+      const root = document.documentElement;
+      const themeProperties = themes[colorTheme] || themes['nagad'];
+      root.style.setProperty('--color-primary-hsl', themeProperties.primary);
+    } catch (error) {
+      console.error("Failed to save color theme to localStorage:", error);
+    }
   }, [colorTheme]);
 
   const toggleMode = () => {
