@@ -6,11 +6,17 @@ class GeminiService {
   private ai: GoogleGenAI | null = null;
   
   constructor() {
-    const apiKey = process.env.API_KEY;
-    if (apiKey) {
-      this.ai = new GoogleGenAI({ apiKey });
+    // More robust check for environments where `process` may not be defined at all.
+    // This avoids a ReferenceError that might not be caught correctly on module load in some JS engines (e.g., older WebViews).
+    if (typeof process !== 'undefined' && process.env && typeof process.env.API_KEY === 'string' && process.env.API_KEY) {
+      try {
+        this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      } catch(e) {
+        console.error("Failed to initialize GoogleGenAI, even with an API key.", e);
+        this.ai = null;
+      }
     } else {
-      console.warn("API_KEY environment variable not set. GeminiService will be disabled.");
+      console.warn("API_KEY environment variable not found or is not a string. GeminiService will be disabled.");
     }
   }
 

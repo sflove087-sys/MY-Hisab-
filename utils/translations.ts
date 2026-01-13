@@ -93,6 +93,12 @@ export const translations = {
     // History
     transactionHistory: 'Transaction History',
     noTransactions: 'No transactions yet.',
+    transactionDetails: 'Transaction Details',
+    transactionID: 'Transaction ID',
+    copy: 'Copy',
+    copied: 'Copied!',
+    status: 'Status',
+    date: 'Date & Time',
 
     // Profile
     profileTitle: 'My Profile',
@@ -209,6 +215,12 @@ export const translations = {
     // History
     transactionHistory: 'লেনদেনের ইতিহাস',
     noTransactions: 'এখনও কোন লেনদেন হয়নি।',
+    transactionDetails: 'লেনদেনের বিবরণ',
+    transactionID: 'ট্রানজ্যাকশন আইডি',
+    copy: 'কপি',
+    copied: 'কপি হয়েছে!',
+    status: 'স্ট্যাটাস',
+    date: 'তারিখ ও সময়',
 
     // Profile
     profileTitle: 'আমার প্রোফাইল',

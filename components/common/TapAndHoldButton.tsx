@@ -13,12 +13,32 @@ const TapAndHoldButton: React.FC<TapAndHoldButtonProps> = ({ onComplete, isLoadi
   const [isHolding, setIsHolding] = useState(false);
   const timerRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(0);
+  const completedRef = useRef(false);
   const { t } = useLanguage();
 
   const HOLD_DURATION = 2000; // 2 seconds
 
+  const cleanupTimer = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    // When a transaction is finished (e.g., failed) and isLoading is reset to false,
+    // also reset the button's internal state so it can be used again.
+    if (!isLoading && completedRef.current) {
+      completedRef.current = false;
+      setProgress(0);
+    }
+  }, [isLoading]);
+
+
   const startHolding = () => {
-    if (isLoading) return;
+    if (isLoading || isHolding) return;
+    
+    completedRef.current = false; // Reset completion for a new hold
     setIsHolding(true);
     startTimeRef.current = Date.now();
     
@@ -27,32 +47,28 @@ const TapAndHoldButton: React.FC<TapAndHoldButtonProps> = ({ onComplete, isLoadi
       const newProgress = Math.min((elapsed / HOLD_DURATION) * 100, 100);
       setProgress(newProgress);
       
-      if (newProgress >= 100) {
-        clearInterval(timerRef.current!);
-        timerRef.current = null;
+      // onComplete is called as soon as the hold is complete.
+      if (newProgress >= 100 && !completedRef.current) {
+        completedRef.current = true; // Prevents multiple calls
+        cleanupTimer();
         onComplete();
-        setIsHolding(false);
+        setIsHolding(false); // Hide "release to cancel" tooltip
       }
     }, 20);
   };
 
   const stopHolding = () => {
     setIsHolding(false);
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-    // Smooth reset
-    const currentProgress = progress;
-    if (currentProgress < 100) {
+    cleanupTimer();
+    // If the hold was released before completing, reset the progress bar.
+    if (!completedRef.current) {
         setProgress(0);
     }
   };
 
+  // Cleanup on component unmount
   useEffect(() => {
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
+    return () => cleanupTimer();
   }, []);
 
   return (
