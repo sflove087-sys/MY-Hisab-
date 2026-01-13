@@ -31,8 +31,8 @@ const AIGuidePage: React.FC = () => {
     setError('');
     setAdvice('');
     try {
-      // Dynamically import the service ONLY when the button is clicked.
-      // This is the definitive fix for the WebView crash.
+      // Dynamically import the service module itself ONLY when the button is clicked.
+      // This ensures the file containing `process.env` is never parsed at startup.
       const { getGeminiService } = await import('../services/geminiService');
       const geminiService = getGeminiService();
       const generatedAdvice = await geminiService.getFinancialAdvice(transactions, language);
