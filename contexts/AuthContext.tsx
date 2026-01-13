@@ -31,6 +31,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(loggedInUser);
       safeStorage.setItem('user', JSON.stringify(loggedInUser));
       try {
+        // Save user's name and mobile for a quick login next time
         safeStorage.setItem('lastActiveUser', JSON.stringify({ name: loggedInUser.name, mobile: loggedInUser.mobile }));
       } catch (error) {
         console.error("Failed to save last active user:", error);
@@ -41,8 +42,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = () => {
     setUser(null);
+    // Remove the session, but keep the last active user for the login screen.
     safeStorage.removeItem('user');
-    safeStorage.removeItem('lastActiveUser');
   };
   
   const refreshUser = useCallback(async () => {

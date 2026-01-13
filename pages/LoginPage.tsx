@@ -46,7 +46,11 @@ const LoginPage: React.FC = () => {
 
     try {
       const user = await login(loginIdentifier, password);
-      if (!user) {
+      if (user) {
+        // If the login was successful and it was for a different user
+        // (via the switch account flow), update the last active user.
+        setLastActiveUser({ name: user.name, mobile: user.mobile });
+      } else {
         setError(language === 'bn' ? 'মোবাইল/ইমেল বা পিন ভুল।' : 'Incorrect mobile/email or PIN.');
       }
     } catch (err) {
