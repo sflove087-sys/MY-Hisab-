@@ -5,6 +5,66 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>আমার ক্যাশ - ডিজিটাল ওয়ালেট</title>
+    
+    <style>
+      #critical-error-display {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+        padding: 20px;
+        margin: 20px;
+        border-radius: 8px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+      #critical-error-display h1 {
+        font-size: 1.5em;
+        margin-bottom: 10px;
+      }
+      #critical-error-display pre {
+        background-color: #f1f1f1;
+        padding: 10px;
+        border-radius: 4px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        font-size: 0.8em;
+        color: #333;
+      }
+    </style>
+
+    <script>
+      window.onerror = function(message, source, lineno, colno, error) {
+        try {
+          document.body.innerHTML = ''; // Clear the blank screen
+          var container = document.createElement('div');
+          container.id = 'critical-error-display';
+          
+          var title = document.createElement('h1');
+          title.appendChild(document.createTextNode('Application Failed to Load'));
+          
+          var para = document.createElement('p');
+          para.appendChild(document.createTextNode('Please send a screenshot of this error to the developer.'));
+
+          var details = document.createElement('pre');
+          var errorText = "Error: " + message + 
+                        "\nSource: " + source + 
+                        "\nLine: " + lineno + ", Column: " + colno;
+          if (error && error.stack) {
+            errorText += "\n\nStack:\n" + error.stack;
+          }
+          details.appendChild(document.createTextNode(errorText));
+          
+          container.appendChild(title);
+          container.appendChild(para);
+          container.appendChild(details);
+          
+          document.body.appendChild(container);
+        } catch (e) {
+          alert('A critical error occurred, and the error display mechanism also failed. Error: ' + message);
+        }
+        return true; // Prevents the default browser error handling
+      };
+    </script>
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -49,7 +109,17 @@
 </script>
 </head>
   <body class="bg-gray-50 dark:bg-dark-bg">
-    <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
+    <noscript>
+      <div style="padding: 20px; font-family: sans-serif; text-align: center;">
+        <h1>JavaScript is Disabled</h1>
+        <p>This application requires JavaScript to run. Please enable it in your browser or WebView settings.</p>
+      </div>
+    </noscript>
+    <div id="root">
+      <div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; color: #999;">
+        <h1>Loading Application...</h1>
+      </div>
+    </div>
+    <script type="module" src="./index.tsx"></script>
   </body>
 </html>

@@ -19,14 +19,14 @@ try {
   );
 } catch (error) {
   console.error("Failed to render React app:", error);
-  rootElement.innerHTML = `
-    <div style="padding: 20px; font-family: sans-serif; color: #333;">
-      <h1 style="color: #d9534f;">Application Error</h1>
-      <p>An unexpected error occurred and the app could not start. Please take a screenshot of this message and send it to the developer.</p>
-      <h3 style="margin-top: 20px;">Error Details:</h3>
-      <pre style="background: #f7f7f7; border: 1px solid #ddd; padding: 10px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word; font-size: 12px;">${error.toString()}</pre>
-      <h3 style="margin-top: 20px;">Stack Trace:</h3>
-      <pre style="background: #f7f7f7; border: 1px solid #ddd; padding: 10px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word; font-size: 12px;">${error.stack}</pre>
-    </div>
-  `;
+  // Use ES5-compatible string concatenation for maximum compatibility.
+  rootElement.innerHTML = 
+    '<div style="padding: 20px; font-family: sans-serif; color: #333;">' +
+      '<h1 style="color: #d9534f;">Application Error</h1>' +
+      '<p>An unexpected error occurred and the app could not start. Please take a screenshot of this message and send it to the developer.</p>' +
+      '<h3 style="margin-top: 20px;">Error Details:</h3>' +
+      '<pre style="background: #f7f7f7; border: 1px solid #ddd; padding: 10px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word; font-size: 12px;">' + error.toString() + '</pre>' +
+      '<h3 style="margin-top: 20px;">Stack Trace:</h3>' +
+      '<pre style="background: #f7f7f7; border: 1px solid #ddd; padding: 10px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word; font-size: 12px;">' + error.stack + '</pre>' +
+    '</div>';
 }
