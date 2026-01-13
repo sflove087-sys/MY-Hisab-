@@ -14,7 +14,6 @@ import CashInPage from './pages/CashInPage';
 import AgentCashOutPage from './pages/AgentCashOutPage';
 import TransactionHistoryPage from './pages/TransactionHistoryPage';
 import ProfilePage from './pages/ProfilePage';
-import AIGuidePage from './pages/AIGuidePage';
 import ChangePinPage from './pages/ChangePinPage';
 import BottomNav from './components/BottomNav';
 import Header from './components/Header';
@@ -54,7 +53,6 @@ const MainApp: React.FC = () => {
             <Route path="/cash-in" element={user ? <CashInPage /> : <Navigate to="/login" />} />
             <Route path="/agent-cash-out" element={user ? <AgentCashOutPage /> : <Navigate to="/login" />} />
             <Route path="/history" element={user ? <TransactionHistoryPage /> : <Navigate to="/login" />} />
-            <Route path="/ai-guide" element={user ? <AIGuidePage /> : <Navigate to="/login" />} />
             <Route path="/profile" element={user ? <ProfilePage /> : <Navigate to="/login" />} />
             <Route path="/change-password" element={user ? <ChangePinPage /> : <Navigate to="/login" />} />
             <Route path="/approve-request/:transactionId" element={user ? <ApproveRequestPage /> : <Navigate to="/login" />} />

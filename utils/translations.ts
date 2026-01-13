@@ -47,7 +47,6 @@ export const translations = {
     // Bottom Nav
     bottomNavHome: 'Home',
     bottomNavHistory: 'History',
-    bottomNavAIGuide: 'AI Guide',
     bottomNavProfile: 'My Account',
 
     // Dashboard
@@ -56,7 +55,6 @@ export const translations = {
     cashOut: 'Cash Out',
     cashIn: 'Cash In',
     history: 'History',
-    aiGuide: 'AI Guide',
     profile: 'Profile',
     agentDashboard: 'Agent Dashboard',
     totalCommission: 'Total Commission',
@@ -107,11 +105,6 @@ export const translations = {
     changeTheme: 'Change Theme',
     darkMode: 'Dark Mode',
     language: 'Language',
-    
-    // AI Guide
-    aiGuideTitle: 'AI Financial Guide',
-    aiPrompt: 'Ask for financial advice based on your transactions...',
-    getAdvice: 'Get Advice',
 
     // Change PIN
     changePinTitle: 'Change PIN',
@@ -169,7 +162,6 @@ export const translations = {
     // Bottom Nav
     bottomNavHome: 'হোম',
     bottomNavHistory: 'লেনদেন',
-    bottomNavAIGuide: 'AI গাইড',
     bottomNavProfile: 'আমার অ্যাকাউন্ট',
 
     // Dashboard
@@ -178,7 +170,6 @@ export const translations = {
     cashOut: 'ক্যাশ আউট',
     cashIn: 'ক্যাশ ইন',
     history: 'লেনদেন',
-    aiGuide: 'AI গাইড',
     profile: 'প্রোফাইল',
     agentDashboard: 'এজেন্ট ড্যাশবোর্ড',
     totalCommission: 'মোট কমিশন',
@@ -229,11 +220,6 @@ export const translations = {
     changeTheme: 'থিম পরিবর্তন',
     darkMode: 'ডার্ক মোড',
     language: 'ভাষা',
-    
-    // AI Guide
-    aiGuideTitle: 'AI ফিনান্সিয়াল গাইড',
-    aiPrompt: 'আপনার লেনদেনের উপর ভিত্তি করে আর্থিক পরামর্শ চান...',
-    getAdvice: 'পরামর্শ নিন',
 
     // Change PIN
     changePinTitle: 'পিন পরিবর্তন করুন',

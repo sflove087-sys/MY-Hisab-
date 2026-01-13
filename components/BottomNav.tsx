@@ -13,7 +13,6 @@ const BottomNav: React.FC = () => {
   const navItems = [
     { path: '/', labelKey: 'bottomNavHome', icon: HomeIcon },
     { path: '/history', labelKey: 'bottomNavHistory', icon: HistoryIcon },
-    { path: '/ai-guide', labelKey: 'bottomNavAIGuide', icon: SparklesIcon },
     { path: '/profile', labelKey: 'bottomNavProfile', icon: UserIcon },
   ];
   
