@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 type IconProps = {
@@ -82,11 +83,15 @@ export const CashOutIcon: React.FC<IconProps> = ({ className }) => (
     </svg>
 );
 
-// FIX: Corrected a series of syntax errors that were causing parsing issues.
-// The malformed attributes on the SVG and path elements have been restored to valid JSX.
 export const ChevronLeftIcon: React.FC<IconProps> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
         <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+    </svg>
+);
+
+export const ArrowRightIcon: React.FC<IconProps> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
     </svg>
 );
 

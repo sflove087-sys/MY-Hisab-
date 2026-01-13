@@ -9,20 +9,42 @@ import { googleSheetService } from '../services/googleSheetService';
 import { useNavigate } from 'react-router-dom';
 import { UserType } from '../types';
 import PageHeader from '../components/common/PageHeader';
+import { ArrowRightIcon, UserIcon } from '../components/Icons';
+
+interface Recipient {
+  name: string;
+  mobile: string;
+}
 
 const SendMoneyPage: React.FC = () => {
   const [mobile, setMobile] = useState('');
   const [amount, setAmount] = useState('');
   const [pin, setPin] = useState('');
-  const [step, setStep] = useState<'input' | 'pin' | 'review'>('input');
+  const [step, setStep] = useState<'input' | 'review'>('input');
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [recipientName, setRecipientName] = useState('');
+  const [recipient, setRecipient] = useState<Recipient | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [recentRecipients, setRecentRecipients] = useState<Recipient[]>([]);
   const { user, refreshUser } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Load recent recipients from localStorage
+    const storedRecents = localStorage.getItem('recentRecipients');
+    if (storedRecents) {
+      setRecentRecipients(JSON.parse(storedRecents));
+    }
+  }, []);
+
+  const saveRecentRecipient = (recipient: Recipient) => {
+    const updatedRecents = [recipient, ...recentRecipients.filter(r => r.mobile !== recipient.mobile)].slice(0, 5);
+    setRecentRecipients(updatedRecents);
+    localStorage.setItem('recentRecipients', JSON.stringify(updatedRecents));
+  };
+
 
   useEffect(() => {
     const timer = setTimeout(async () => {
@@ -34,12 +56,12 @@ const SendMoneyPage: React.FC = () => {
           const result = await googleSheetService.getUserByMobile(`0${m}`);
           if ('error' in result) {
             setError('প্রাপক খুঁজে পাওয়া যায়নি');
-            setRecipientName('');
+            setRecipient(null);
           } else if (result.type === UserType.AGENT) {
             setError('এজেন্ট নাম্বারে সেন্ড মানি করা যাবে না');
-            setRecipientName('');
+            setRecipient(null);
           } else {
-            setRecipientName(result.name);
+            setRecipient({ name: result.name, mobile: result.mobile });
           }
         } catch {
           setError('ভেরিফিকেশন এরর');
@@ -47,17 +69,17 @@ const SendMoneyPage: React.FC = () => {
           setIsVerifying(false);
         }
       } else {
-        setRecipientName('');
+        setRecipient(null);
       }
     }, 600);
     return () => clearTimeout(timer);
   }, [mobile]);
 
-  const handleProceed = (e: React.FormEvent) => {
+  const handleProceedToReview = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!recipientName) {
+    if (!recipient) {
       setError('সঠিক পার্সোনাল নাম্বার দিন');
       return;
     }
@@ -71,12 +93,10 @@ const SendMoneyPage: React.FC = () => {
       setError('পর্যাপ্ত ব্যালেন্স নেই');
       return;
     }
-    setStep('pin');
-  };
-
-  const handlePinSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+    if (pin.length !== 4) {
+      setError('৪-সংখ্যার পিন দিন');
+      return;
+    }
     if (pin !== user?.password) {
       setError('ভুল পিন। আবার চেষ্টা করুন।');
       return;
@@ -85,15 +105,17 @@ const SendMoneyPage: React.FC = () => {
   };
 
   const handleFinalTransaction = async () => {
+    if (!recipient) return;
     setIsLoading(true);
     try {
       const result = await googleSheetService.performSendMoney(user!.id, `0${mobile.trim()}`, parseFloat(amount));
       if (result && result.status === 'Success') {
         await refreshUser();
+        saveRecentRecipient(recipient);
         setIsSuccessModalOpen(true);
       } else {
         setError(result?.error || 'লেনদেন ব্যর্থ হয়েছে');
-        setStep('input'); // Go back to start on failure
+        setStep('input');
       }
     } catch (err) {
       setError('একটি ত্রুটি ঘটেছে');
@@ -102,119 +124,145 @@ const SendMoneyPage: React.FC = () => {
       setIsLoading(false);
     }
   };
+  
+  const handleSelectRecent = (recent: Recipient) => {
+    setMobile(recent.mobile.slice(3)); // Remove +88
+  };
+
+  const renderInputScreen = () => (
+     <div className="bg-white dark:bg-dark-surface p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-dark-border">
+          <form onSubmit={handleProceedToReview} className="space-y-4">
+            <div className="relative">
+              <Input 
+                id="mobile" 
+                label={t('recipientMobile')} 
+                type="tel" 
+                value={mobile} 
+                onChange={(e) => setMobile(e.target.value.replace(/[^0-9]/g, ''))}
+                placeholder="1XXXXXXXXX"
+                required
+                prefix="+880"
+                maxLength={10}
+              />
+              {isVerifying && <div className="absolute right-4 bottom-4"><div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full"></div></div>}
+              {recipient && <p className="text-xs text-green-600 font-bold mt-1 px-1 tracking-tight">✓ {recipient.name}</p>}
+            </div>
+            
+            {recentRecipients.length > 0 && !mobile && (
+              <div className="pb-2">
+                <p className="text-xs font-bold text-gray-400 dark:text-dark-subtext mb-2 px-1">{t('recentRecipients')}</p>
+                <div className="flex items-center space-x-2 overflow-x-auto pb-2">
+                  {recentRecipients.map(r => (
+                    <button key={r.mobile} type="button" onClick={() => handleSelectRecent(r)} className="flex-shrink-0 px-3 py-2 bg-primary/5 dark:bg-primary/10 rounded-full text-primary text-xs font-bold text-left hover:bg-primary/20">
+                      <p>{r.name}</p>
+                      <p className="text-[10px] opacity-70">{r.mobile}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <Input 
+              id="amount" 
+              label={t('amount')} 
+              type="number" 
+              value={amount} 
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="0.00"
+              required 
+            />
+            {amount && recipient && (
+              <div className="animate-in fade-in duration-300">
+                <Input
+                    id="pin"
+                    label={t('enterPIN')}
+                    type="password"
+                    value={pin}
+                    onChange={(e) => setPin(e.target.value)}
+                    required
+                    placeholder="••••"
+                    maxLength={4}
+                    inputMode="numeric"
+                />
+              </div>
+            )}
+            <button 
+                type="submit" 
+                className="w-full bg-primary hover:bg-primary/90 text-white font-black py-4 rounded-2xl transition-all active:scale-95 uppercase tracking-widest text-sm disabled:bg-gray-300 dark:disabled:bg-gray-600"
+                disabled={!pin || pin.length < 4}
+            >
+              পরবর্তী
+            </button>
+          </form>
+      </div>
+  );
+  
+  const renderReviewScreen = () => (
+      <div className="space-y-6">
+        <h2 className="text-xl font-bold text-center text-gray-800 dark:text-dark-text">{t('confirmSendMoney')}</h2>
+         
+        <div className="flex items-center justify-center space-x-2">
+            {/* From Card */}
+            <div className="w-1/3 text-center">
+                <div className="w-16 h-16 bg-gray-100 dark:bg-dark-surface rounded-full flex items-center justify-center mb-2 mx-auto shadow-sm">
+                    <UserIcon className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                </div>
+                <p className="text-xs font-bold text-gray-800 dark:text-dark-text truncate">{user?.name}</p>
+                <p className="text-[10px] text-gray-400">{t('from')}</p>
+            </div>
+            
+            <div className="w-10 h-10 bg-gray-100 dark:bg-dark-surface rounded-full flex items-center justify-center border-4 border-gray-50 dark:border-dark-bg">
+                <ArrowRightIcon className="w-5 h-5 text-gray-400"/>
+            </div>
+            
+            {/* To Card */}
+            <div className="w-1/3 text-center">
+                <div className="w-16 h-16 bg-gray-100 dark:bg-dark-surface rounded-full flex items-center justify-center mb-2 mx-auto shadow-sm">
+                    <UserIcon className="w-8 h-8 text-primary" />
+                </div>
+                <p className="text-xs font-bold text-gray-800 dark:text-dark-text truncate">{recipient?.name}</p>
+                <p className="text-[10px] text-gray-400">{t('to')}</p>
+            </div>
+        </div>
+         
+         <div className="bg-white dark:bg-dark-surface p-5 rounded-3xl space-y-3 border border-gray-100 dark:border-dark-border">
+            <div className="text-center">
+                <p className="text-sm text-gray-500 dark:text-dark-subtext">{t('amount')}</p>
+                <p className="text-4xl font-black text-primary">৳{parseFloat(amount).toLocaleString()}</p>
+            </div>
+            <div className="flex justify-between items-center border-t border-gray-100 dark:border-dark-border pt-3 mt-3">
+                <span className="text-sm font-bold text-gray-500 dark:text-dark-subtext">{t('newBalance')}</span>
+                <span className="text-sm font-bold text-gray-800 dark:text-white">৳{(user!.balance - parseFloat(amount)).toLocaleString()}</span>
+            </div>
+         </div>
+         
+         <div className="pt-2">
+            <TapAndHoldButton 
+                label="লেনদেন সম্পন্ন করতে ট্যাপ করে ধরে রাখুন" 
+                onComplete={handleFinalTransaction} 
+                isLoading={isLoading} 
+            />
+         </div>
+         
+         <button 
+            onClick={() => setStep('input')}
+            className="w-full text-gray-400 hover:text-gray-600 font-bold text-xs uppercase tracking-widest pt-2"
+         >
+             {t('cancel')}
+         </button>
+      </div>
+  );
 
   return (
     <div>
       <PageHeader title={t('sendMoneyTitle')} />
       <div className="p-4 pt-0">
-        <div className="bg-white dark:bg-dark-surface p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-dark-border">
-          <p className="text-center text-gray-400 dark:text-dark-subtext text-[9px] font-bold uppercase tracking-widest -mt-4 mb-8">পার্সোনাল থেকে পার্সোনাল লেনদেন</p>
-          
-          {error && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 text-red-600 dark:text-red-400 p-3 rounded-2xl mb-6 text-xs text-center font-bold">
-                  {error}
-              </div>
-          )}
-
-          {step === 'input' && (
-            <form onSubmit={handleProceed} className="space-y-4">
-              <div className="relative">
-                <Input 
-                  id="mobile" 
-                  label={t('recipientMobile')} 
-                  type="tel" 
-                  value={mobile} 
-                  onChange={(e) => setMobile(e.target.value)}
-                  placeholder="1XXXXXXXXX"
-                  required
-                  prefix="+880"
-                  maxLength={10}
-                />
-                {isVerifying && <div className="absolute right-4 bottom-4"><div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full"></div></div>}
-                {recipientName && <p className="text-xs text-green-600 font-bold mt-1 px-1 tracking-tight">✓ {recipientName}</p>}
-              </div>
-              <Input 
-                id="amount" 
-                label={t('amount')} 
-                type="number" 
-                value={amount} 
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="0.00"
-                required 
-              />
-              <button 
-                  type="submit" 
-                  className="w-full bg-primary hover:bg-primary/90 text-white font-black py-4 rounded-2xl transition-all active:scale-95 uppercase tracking-widest text-sm"
-              >
-                পরবর্তী
-              </button>
-            </form>
-          )}
-
-          {step === 'pin' && (
-            <form onSubmit={handlePinSubmit} className="space-y-6">
-              <div className="text-center">
-                  <p className="text-xs text-gray-500 dark:text-dark-subtext">প্রাপক: <span className="font-bold text-gray-800 dark:text-dark-text">{recipientName}</span></p>
-                  <p className="text-3xl font-black text-primary">৳{parseFloat(amount).toLocaleString()}</p>
-              </div>
-              <input
-                  type="password"
-                  value={pin}
-                  onChange={(e) => setPin(e.target.value)}
-                  className="w-full p-4 bg-gray-50 dark:bg-dark-bg border-2 border-gray-100 dark:border-dark-border rounded-xl mb-4 text-center text-2xl tracking-[1em] focus:border-primary transition-colors outline-none"
-                  autoFocus
-                  maxLength={4}
-                  placeholder="••••"
-                  inputMode="numeric"
-              />
-              <button 
-                  type="submit" 
-                  className="w-full bg-primary hover:bg-primary/90 text-white font-black py-4 rounded-2xl transition-all active:scale-95 uppercase tracking-widest text-sm"
-              >
-                নিশ্চিত করুন
-              </button>
-              <button 
-                  onClick={() => setStep('input')}
-                  className="w-full text-gray-400 hover:text-gray-600 font-bold text-xs uppercase tracking-widest pt-2"
-              >
-                   ফিরে যান
-              </button>
-            </form>
-          )}
-          
-          {step === 'review' && (
-            <div className="space-y-8">
-               <div className="bg-gray-50 dark:bg-dark-bg p-5 rounded-3xl space-y-3 border border-gray-100 dark:border-dark-border">
-                  <div className="flex justify-between items-center">
-                      <span className="text-sm font-bold text-gray-400 dark:text-dark-subtext">প্রাপক</span>
-                      <div className="text-right">
-                          <p className="text-sm font-bold text-gray-800 dark:text-white">{recipientName}</p>
-                          <p className="text-xs text-gray-400 dark:text-dark-subtext">+880 {mobile}</p>
-                      </div>
-                  </div>
-                  <div className="flex justify-between items-center border-t border-gray-100 dark:border-dark-border pt-3">
-                      <span className="text-sm font-bold text-gray-400 dark:text-dark-subtext">পরিমাণ</span>
-                      <span className="text-lg font-black text-primary">৳{parseFloat(amount).toLocaleString()}</span>
-                  </div>
-               </div>
-               
-               <div className="pt-4">
-                  <TapAndHoldButton 
-                      label="লেনদেন সম্পন্ন করতে ট্যাপ করে ধরে রাখুন" 
-                      onComplete={handleFinalTransaction} 
-                      isLoading={isLoading} 
-                  />
-               </div>
-               
-               <button 
-                  onClick={() => setStep('input')}
-                  className="w-full text-gray-400 hover:text-gray-600 font-bold text-xs uppercase tracking-widest pt-2"
-               >
-                   বাতিল করুন
-               </button>
+        {error && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 text-red-600 dark:text-red-400 p-3 rounded-2xl mb-4 text-xs text-center font-bold">
+                {error}
             </div>
-          )}
-        </div>
+        )}
+        {step === 'input' ? renderInputScreen() : renderReviewScreen()}
       </div>
 
       <SuccessModal 
@@ -222,7 +270,7 @@ const SendMoneyPage: React.FC = () => {
         onClose={() => navigate('/')}
         title="সেন্ড মানি সফল হয়েছে"
         amount={parseFloat(amount)}
-        recipient={recipientName}
+        recipient={recipient?.name}
       />
     </div>
   );

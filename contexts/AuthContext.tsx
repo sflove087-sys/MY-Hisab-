@@ -5,7 +5,7 @@ import { googleSheetService } from '../services/googleSheetService';
 
 interface AuthContextType {
   user: User | null;
-  login: (mobile: string, password: string) => Promise<User | null>;
+  login: (identifier: string, password: string) => Promise<User | null>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -13,13 +13,16 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    const savedUser = localStorage.getItem('user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
 
-  const login = async (mobile: string, password: string): Promise<User | null> => {
-    const loggedInUser = await googleSheetService.loginUser(mobile, password);
+  const login = async (identifier: string, password: string): Promise<User | null> => {
+    const loggedInUser = await googleSheetService.loginUser(identifier, password);
     if (loggedInUser) {
       setUser(loggedInUser);
-      // Remember the user for the next app launch's quick login screen
+      localStorage.setItem('user', JSON.stringify(loggedInUser));
       localStorage.setItem('lastActiveUser', JSON.stringify({ name: loggedInUser.name, mobile: loggedInUser.mobile }));
     }
     return loggedInUser;
@@ -27,8 +30,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = () => {
     setUser(null);
-    // When logging out, we don't want the quick login screen next time.
-    // Or we can keep it. For now, let's remove it for a full logout.
+    localStorage.removeItem('user');
     localStorage.removeItem('lastActiveUser');
   };
   
@@ -37,6 +39,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const refreshedUser = await googleSheetService.getUserById(user.id);
       if (refreshedUser) {
         setUser(refreshedUser);
+        localStorage.setItem('user', JSON.stringify(refreshedUser));
       }
     }
   }, [user]);

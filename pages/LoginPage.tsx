@@ -4,11 +4,13 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import Logo from '../components/Logo';
-import { UserIcon, SwitchHorizontalIcon } from '../components/Icons';
+import { UserIcon } from '../components/Icons';
+import Input from '../components/common/Input';
+import Button from '../components/common/Button';
 
 const LoginPage: React.FC = () => {
   const [lastActiveUser, setLastActiveUser] = useState<{name: string; mobile: string} | null>(null);
-  const [mobile, setMobile] = useState('');
+  const [loginIdentifier, setLoginIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -19,7 +21,9 @@ const LoginPage: React.FC = () => {
   useEffect(() => {
     const storedUser = localStorage.getItem('lastActiveUser');
     if (storedUser) {
-      setLastActiveUser(JSON.parse(storedUser));
+      const parsedUser = JSON.parse(storedUser);
+      setLastActiveUser(parsedUser);
+      setLoginIdentifier(parsedUser.mobile); // Pre-fill identifier for submission
     }
   }, []);
 
@@ -28,164 +32,131 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
     setError('');
 
-    const loginMobile = lastActiveUser ? lastActiveUser.mobile : mobile;
-
-    if (!loginMobile || !password) {
-      setError('মোবাইল এবং পিন দিন।');
+    if (!loginIdentifier || !password) {
+      setError(language === 'bn' ? 'মোবাইল/ইমেল এবং পিন দিন।' : 'Please enter mobile/email and PIN.');
       setIsLoading(false);
       return;
     }
 
     try {
-      const user = await login(loginMobile, password);
-      if (!user) setError('মোবাইল নাম্বার বা পিন ভুল।');
+      const user = await login(loginIdentifier, password);
+      if (!user) {
+        setError(language === 'bn' ? 'মোবাইল/ইমেল বা পিন ভুল।' : 'Incorrect mobile/email or PIN.');
+      }
     } catch (err) {
-      setError('সার্ভারে সমস্যা হচ্ছে। আবার চেষ্টা করুন।');
+      setError(language === 'bn' ? 'সার্ভারে সমস্যা হচ্ছে। আবার চেষ্টা করুন।' : 'Server error. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleSwitchAccount = () => {
+    localStorage.removeItem('lastActiveUser');
     setLastActiveUser(null);
-    setMobile('');
+    setLoginIdentifier('');
     setPassword('');
     setError('');
   };
 
-  const FullLoginForm = () => (
-    <>
-      <div className="flex flex-col items-center mt-12 mb-10">
-        <Logo className="w-20 h-20" />
-        <h1 className="text-primary text-4xl font-black mt-2 tracking-tighter">আমার ক্যাশ</h1>
-      </div>
-
-      <div className="w-full max-w-xs space-y-6">
-        {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-xl text-[10px] text-center font-bold border border-red-100">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleLoginSubmit} className="space-y-6">
-          <div className="space-y-1">
-             <label className="text-gray-400 text-[10px] font-bold uppercase tracking-widest block text-center">{t('mobileNumber')}</label>
-             <input 
-              type="tel" 
-              value={mobile}
-              onChange={(e) => setMobile(e.target.value)}
-              placeholder="017XX-XXXXXX"
-              className="w-full text-center text-lg font-bold text-gray-800 border-b border-gray-200 focus:border-primary outline-none py-1.5 bg-transparent transition-colors"
-             />
-          </div>
-
-          <div className="space-y-1 relative">
-             <label className="text-primary text-[10px] font-bold uppercase tracking-widest block text-left ml-6">{t('pin')}</label>
-             <div className="flex items-center">
-                <span className="text-primary mr-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                </span>
-                <input 
-                    type="password" 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full text-base font-bold border-b-2 border-primary focus:outline-none py-1 bg-transparent tracking-[0.4em]"
-                    maxLength={4}
-                    inputMode="numeric"
-                    placeholder="••••"
-                />
-             </div>
-          </div>
-
-          <button 
-            type="submit"
-            disabled={isLoading}
-            className="w-full border-2 border-primary text-primary text-xs font-black py-3.5 rounded-full hover:bg-primary hover:text-white transition-all active:scale-95 mt-4 uppercase tracking-widest"
-          >
-            {isLoading ? t('loading') : t('login')}
-          </button>
-          
-          <div className="text-center pt-4 border-t border-gray-50">
-            <p className="text-gray-400 text-[10px] font-medium mb-2">{t('noAccountPrompt')}</p>
-            <Link 
-              to="/signup" 
-              className="text-primary text-xs font-black uppercase tracking-widest hover:underline"
-            >
-              {t('register')}
-            </Link>
-          </div>
-        </form>
-      </div>
-    </>
-  );
-
-  const PinOnlyForm = () => (
-    <div className="w-full max-w-xs flex flex-col items-center flex-grow">
-        <div className="flex flex-col items-center mt-16 mb-10 text-center">
-            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4 border-4 border-white shadow-md">
-                <UserIcon className="w-16 h-16 text-gray-400" />
-            </div>
-            <h1 className="text-gray-800 text-2xl font-bold">{lastActiveUser?.name}</h1>
-            <p className="text-gray-500 text-base">{lastActiveUser?.mobile}</p>
-        </div>
-      
-      {error && (
-        <div className="bg-red-50 text-red-600 p-3 rounded-xl text-xs text-center font-bold border border-red-100 w-full">
-          {error}
-        </div>
-      )}
-
-      <form onSubmit={handleLoginSubmit} className="w-full space-y-6 mt-6">
-        <div>
-           <input 
-              type="password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full text-center text-4xl font-bold border-b-2 border-primary focus:outline-none py-2 bg-transparent tracking-[0.4em]"
-              maxLength={4}
-              inputMode="numeric"
-              placeholder="••••"
-              autoFocus
-            />
-        </div>
-
-        <button 
-          type="submit"
-          disabled={isLoading}
-          className="w-full bg-primary text-white text-sm font-black py-4 rounded-full hover:bg-primary/90 transition-all active:scale-95 uppercase tracking-widest"
-        >
-          {isLoading ? t('loading') : t('login')}
-        </button>
-      </form>
-      
-      <div className="mt-auto mb-10">
-        <button onClick={handleSwitchAccount} className="flex items-center space-x-2 text-gray-400 hover:text-primary transition-colors group">
-            <SwitchHorizontalIcon className="w-5 h-5 transition-transform group-hover:rotate-180" />
-            <span className="text-xs font-bold uppercase tracking-widest">অন্য অ্যাকাউন্ট</span>
-        </button>
-      </div>
-    </div>
-  );
-
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center pt-8 px-6 relative">
-      <div className="absolute top-6 right-6 flex border border-gray-100 rounded-lg overflow-hidden h-7">
-        <button 
-          onClick={() => language !== 'bn' && toggleLanguage()}
-          className={`px-3 text-[9px] font-bold ${language === 'bn' ? 'bg-primary text-white' : 'bg-white text-gray-400'}`}
-        >
-          বাং
-        </button>
-        <button 
-          onClick={() => language !== 'en' && toggleLanguage()}
-          className={`px-3 text-[9px] font-bold ${language === 'en' ? 'bg-primary text-white' : 'bg-white text-gray-400'}`}
-        >
-          ENG
-        </button>
-      </div>
-      
-      {lastActiveUser ? <PinOnlyForm /> : <FullLoginForm />}
-      
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-bg flex flex-col overflow-hidden">
+        {/* Header with Wave */}
+        <header className="relative bg-primary text-white p-6 pt-10 text-center shadow-lg">
+            <div className="absolute top-4 right-4 z-20">
+                <div className="flex border border-white/20 rounded-lg overflow-hidden h-7 backdrop-blur-sm bg-white/10">
+                    <button 
+                        onClick={() => language !== 'bn' && toggleLanguage()}
+                        className={`px-3 text-[9px] font-bold transition-colors ${language === 'bn' ? 'bg-white text-primary' : 'bg-transparent text-white/80'}`}
+                    >
+                        বাং
+                    </button>
+                    <button 
+                        onClick={() => language !== 'en' && toggleLanguage()}
+                        className={`px-3 text-[9px] font-bold transition-colors ${language === 'en' ? 'bg-white text-primary' : 'bg-transparent text-white/80'}`}
+                    >
+                        ENG
+                    </button>
+                </div>
+            </div>
+
+            <Logo className="w-14 h-14 mx-auto mb-2 drop-shadow-md" />
+            <h1 className="text-2xl font-black tracking-tighter drop-shadow-sm">আমার ক্যাশ</h1>
+            
+            <div className="absolute -bottom-px left-0 w-full h-16">
+              <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
+                <path d="M0,100 C25,50 75,50 100,100 L100,100 L0,100 Z" className="fill-current text-gray-50 dark:text-dark-bg"></path>
+              </svg>
+            </div>
+        </header>
+
+        <main className="flex-grow flex flex-col p-6 animate-in fade-in duration-500">
+            <div className="flex-grow">
+                {error && (
+                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 text-red-600 dark:text-red-400 p-3 rounded-2xl mb-6 text-xs text-center font-bold">
+                        {error}
+                    </div>
+                )}
+
+                <form onSubmit={handleLoginSubmit} className="space-y-4">
+                    {lastActiveUser ? (
+                        <div className="text-center mb-6">
+                            <div className="w-20 h-20 bg-gray-100 dark:bg-dark-surface rounded-full flex items-center justify-center mb-3 border-4 border-white dark:border-dark-bg shadow-md mx-auto">
+                                <UserIcon className="w-12 h-12 text-gray-400 dark:text-gray-500" />
+                            </div>
+                            <h2 className="text-lg font-bold text-gray-800 dark:text-dark-text">{lastActiveUser.name}</h2>
+                            <p className="text-sm text-gray-500 dark:text-dark-subtext">{lastActiveUser.mobile}</p>
+                        </div>
+                    ) : (
+                        <Input 
+                            label={t('mobileOrEmail')}
+                            id="loginIdentifier"
+                            type="text" 
+                            value={loginIdentifier}
+                            onChange={(e) => setLoginIdentifier(e.target.value)}
+                            placeholder="01... or you@example.com"
+                            required
+                        />
+                    )}
+
+                    <Input 
+                        label={t('pin')}
+                        id="password"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        maxLength={4}
+                        inputMode="numeric"
+                        placeholder="••••"
+                        required
+                        autoFocus={!!lastActiveUser}
+                    />
+                    
+                    <Button 
+                        type="submit"
+                        disabled={isLoading}
+                        isLoading={isLoading}
+                        className="mt-4"
+                    >
+                        {t('login')}
+                    </Button>
+                </form>
+            </div>
+
+            <div className="mt-auto text-center pt-6">
+                {lastActiveUser ? (
+                    <button onClick={handleSwitchAccount} className="font-bold text-primary dark:text-primary-dark hover:underline text-sm">
+                        {t('switchAccount')}
+                    </button>
+                ) : (
+                    <p className="text-sm text-gray-500 dark:text-dark-subtext">
+                        {t('noAccountPrompt')}{' '}
+                        <Link to="/signup" className="font-bold text-primary hover:underline">
+                            {t('register')}
+                        </Link>
+                    </p>
+                )}
+            </div>
+        </main>
     </div>
   );
 };

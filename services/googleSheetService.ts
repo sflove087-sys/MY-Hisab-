@@ -22,9 +22,9 @@ class GoogleSheetService {
     }
   }
 
-  async loginUser(mobile: string, password: string): Promise<User | null> {
-    // Backend expects 'email', so we pass the mobile number as the email parameter.
-    return this.apiFetch({ action: 'login', email: mobile, password });
+  async loginUser(identifier: string, password: string): Promise<User | null> {
+    // The backend `loginUser` function now handles both email and mobile via the same parameter.
+    return this.apiFetch({ action: 'login', email: identifier, password });
   }
   
   async signUpUser(name: string, mobile: string, email: string, password: string): Promise<{status: string; error?: string; user?: User} | null> {

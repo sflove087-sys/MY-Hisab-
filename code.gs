@@ -144,14 +144,25 @@ function findUserRowIndexByEmail(usersData, email) {
     return -1;
 }
 
-function loginUser(email, password) {
+function loginUser(loginIdentifier, password) {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   const sheet = getOrCreateSheet(ss, USERS_SHEET_NAME);
   const users = sheetToJSON(sheet); 
-  const user = users.find(u => u.email.trim().toLowerCase() === String(email).trim().toLowerCase() && u.password === password);
+  let user;
+
+  if (String(loginIdentifier).includes('@')) {
+    // Email login
+    user = users.find(u => u.email.trim().toLowerCase() === String(loginIdentifier).trim().toLowerCase() && u.password === password);
+  } else {
+    // Mobile login
+    const normIdentifier = normalizeMobile(loginIdentifier);
+    user = users.find(u => normalizeMobile(u.mobile) === normIdentifier && u.password === password);
+  }
+
   if (user) {
     user.balance = parseFloat(user.balance) || 0;
     user.commission = parseFloat(user.commission) || 0;
+    delete user.password; // Security: Never send password to client
   }
   return user || null;
 }
@@ -178,6 +189,7 @@ function getUserById(id) {
   if (user) {
     user.balance = parseFloat(user.balance) || 0;
     user.commission = parseFloat(user.commission) || 0;
+    delete user.password; // Security: Never send password to client
   }
   return user || null;
 }

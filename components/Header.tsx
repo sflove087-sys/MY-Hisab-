@@ -82,14 +82,14 @@ const Header: React.FC<HeaderProps> = ({ onNotificationClick }) => {
         {!isAgent ? (
           <button 
             onClick={() => setShowBalance(!showBalance)}
-            className="bg-white/95 backdrop-blur-sm dark:bg-dark-surface/80 rounded-full h-10 flex items-center shadow-lg transition-all duration-300 min-w-[200px] relative border border-white/30 dark:border-dark-border active:scale-95 group"
+            className="bg-white/95 backdrop-blur-sm dark:bg-dark-surface/80 rounded-full h-10 flex items-center shadow-lg transition-all duration-300 min-w-[200px] relative border border-white/30 dark:border-dark-border active:scale-95 group overflow-hidden"
           >
-            <div className={`flex items-center justify-center w-full px-4 transition-opacity duration-300 ${showBalance ? 'opacity-0' : 'opacity-100'}`}>
+            <div className={`absolute inset-0 flex items-center justify-center w-full px-4 transition-transform duration-300 ease-in-out ${showBalance ? 'transform translate-x-full' : 'transform translate-x-0'}`}>
               <span className="text-primary text-xs font-bold whitespace-nowrap tracking-tight">
                   {language === 'en' ? 'Tap for Balance' : 'ব্যালেন্স জানতে ট্যাপ করুন'}
               </span>
             </div>
-            <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${showBalance ? 'opacity-100' : 'opacity-0'}`}>
+            <div className={`absolute inset-0 flex items-center justify-center transition-transform duration-300 ease-in-out ${showBalance ? 'transform translate-x-0' : 'transform -translate-x-full'}`}>
                <span className="text-primary dark:text-white text-lg font-bold tracking-tight">
                   ৳ {(Number(user?.balance) || 0).toLocaleString()}
                </span>

@@ -55,9 +55,6 @@ const TapAndHoldButton: React.FC<TapAndHoldButtonProps> = ({ onComplete, isLoadi
     };
   }, []);
 
-  // Calculate position of the "Sun" icon (right to left)
-  const sunPosition = 100 - progress;
-
   return (
     <div className="w-full relative select-none">
       <button
@@ -69,19 +66,18 @@ const TapAndHoldButton: React.FC<TapAndHoldButtonProps> = ({ onComplete, isLoadi
         disabled={isLoading}
         className={`w-full h-14 bg-gray-50 dark:bg-dark-surface border border-gray-200 dark:border-gray-800 rounded-full overflow-hidden relative transition-all active:scale-[0.98] ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}
       >
-        {/* Progress Fill Background (filling from right to left as instructed) */}
+        {/* Progress Fill Background */}
         <div 
-          className="absolute top-0 right-0 h-full bg-primary/20 dark:bg-primary-dark/20 transition-all ease-out"
+          className="absolute top-0 left-0 h-full bg-primary/20 dark:bg-primary-dark/20 transition-all ease-out"
           style={{ width: `${progress}%` }}
         ></div>
         
-        {/* The Animated "Sun" Icon moving from right to left */}
+        {/* The Animated "Sun" Icon moving from left to right */}
         <div 
             className="absolute top-1/2 -translate-y-1/2 w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-lg transition-all ease-linear z-20"
             style={{ 
-              right: `calc(${progress}% - 20px)`,
+              left: `calc(${progress}% - 16px)`, // 16px is half of the icon's width (w-8 -> 2rem -> 32px)
               opacity: progress > 0 ? 1 : 0.3,
-              left: 'auto'
             }}
         >
             <svg className="w-5 h-5 text-white animate-spin-slow" fill="currentColor" viewBox="0 0 20 20">
