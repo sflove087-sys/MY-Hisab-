@@ -7,8 +7,6 @@ class GeminiService {
   
   constructor() {
     try {
-      // This robust check prevents crashes in environments without `process` or a valid API_KEY.
-      // It's fully wrapped in a try-catch to handle any ReferenceError in unusual environments like a WebView.
       const apiKey = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : undefined;
       
       if (apiKey && typeof apiKey === 'string') {
@@ -60,4 +58,17 @@ class GeminiService {
   }
 }
 
-export const geminiService = new GeminiService();
+// Lazy-initialized singleton instance
+let geminiServiceInstance: GeminiService | null = null;
+
+/**
+ * Gets the singleton instance of the GeminiService.
+ * The instance is created on the first call to this function.
+ * This prevents the constructor from running on app startup and crashing WebViews.
+ */
+export const getGeminiService = (): GeminiService => {
+  if (!geminiServiceInstance) {
+    geminiServiceInstance = new GeminiService();
+  }
+  return geminiServiceInstance;
+};
