@@ -4,7 +4,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Transaction } from '../types';
 import { googleSheetService } from '../services/googleSheetService';
-import { getGeminiService } from '../services/geminiService';
 import Button from '../components/common/Button';
 import { SparklesIcon } from '../components/Icons';
 
@@ -32,11 +31,14 @@ const AIGuidePage: React.FC = () => {
     setError('');
     setAdvice('');
     try {
-      // Get the service instance only when needed. This prevents startup crashes.
+      // Dynamically import the service ONLY when the button is clicked.
+      // This is the definitive fix for the WebView crash.
+      const { getGeminiService } = await import('../services/geminiService');
       const geminiService = getGeminiService();
       const generatedAdvice = await geminiService.getFinancialAdvice(transactions, language);
       setAdvice(generatedAdvice);
     } catch (err) {
+      console.error("Error during AI advice generation:", err);
       setError(t('error'));
     } finally {
       setIsLoading(false);
