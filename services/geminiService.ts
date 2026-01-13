@@ -1,28 +1,54 @@
 
-import { GoogleGenAI } from "@google/genai";
 import { Transaction } from '../types';
+
+// The GoogleGenAI type is not available at the top level anymore.
+// We use 'any' to avoid a static dependency that could crash WebViews.
+type GoogleGenAI = any;
 
 class GeminiService {
   private ai: GoogleGenAI | null = null;
+  private apiKey: string | undefined;
   
   constructor() {
     try {
-      const apiKey = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : undefined;
+      // Safely read the API key without importing any external libraries.
+      this.apiKey = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : undefined;
       
-      if (apiKey && typeof apiKey === 'string') {
-        this.ai = new GoogleGenAI({ apiKey });
-      } else {
-        console.warn("API_KEY environment variable not found or is not a string. GeminiService will be disabled.");
+      if (!this.apiKey) {
+        console.warn("API_KEY environment variable not found. GeminiService will be disabled.");
       }
     } catch (error) {
-      console.warn("An error occurred during GeminiService initialization. This may be expected in some environments (like a WebView). The service will be disabled.", error);
-      this.ai = null;
+      console.warn("An error occurred reading API_KEY. The service will be disabled.", error);
+      this.apiKey = undefined;
+    }
+  }
+
+  /**
+   * Initializes the AI service by dynamically importing and instantiating the GoogleGenAI client.
+   * This is done on-demand to prevent startup crashes.
+   */
+  private async initializeAi() {
+    // If already initialized or no API key, do nothing.
+    if (this.ai || !this.apiKey) {
+      return;
+    }
+    
+    try {
+      // Dynamically import the library HERE, at the very last moment.
+      const { GoogleGenAI } = await import('@google/genai');
+      this.ai = new GoogleGenAI({ apiKey: this.apiKey });
+    } catch (error) {
+       console.error("Failed to dynamically import or initialize GoogleGenAI:", error);
+       this.ai = null; // Ensure it's null on failure.
     }
   }
 
   async getFinancialAdvice(transactions: Transaction[], language: 'en' | 'bn'): Promise<string> {
+    // Ensure the AI client is initialized before use.
+    await this.initializeAi();
+
     if (!this.ai) {
-      return language === 'bn' ? "AI পরিষেবা উপলব্ধ নেই কারণ API কী সেট করা নেই।" : "AI service is unavailable because the API key is not set.";
+      return language === 'bn' ? "AI পরিষেবা উপলব্ধ নেই। API কী সেট করা নেই অথবা লাইব্রেরি লোড হতে ব্যর্থ হয়েছে।" : "AI service is unavailable. API key is not set or the library failed to load.";
     }
 
     const transactionSummary = transactions.map(t => 
@@ -64,7 +90,6 @@ let geminiServiceInstance: GeminiService | null = null;
 /**
  * Gets the singleton instance of the GeminiService.
  * The instance is created on the first call to this function.
- * This prevents the constructor from running on app startup and crashing WebViews.
  */
 export const getGeminiService = (): GeminiService => {
   if (!geminiServiceInstance) {
