@@ -5,11 +5,12 @@ import { useLanguage } from '../contexts/LanguageContext';
 import Input from '../components/common/Input';
 import TapAndHoldButton from '../components/common/TapAndHoldButton';
 import SuccessModal from '../components/common/SuccessModal';
+import ConfirmationModal from '../components/common/ConfirmationModal';
 import { googleSheetService } from '../services/googleSheetService';
 import { useNavigate } from 'react-router-dom';
 import { UserType } from '../types';
 import PageHeader from '../components/common/PageHeader';
-import { ArrowRightIcon, UserIcon } from '../components/Icons';
+import { ArrowRightIcon, UserIcon, ScanIcon } from '../components/Icons';
 import { safeStorage } from '../utils/storage';
 
 interface Recipient {
@@ -23,6 +24,7 @@ const SendMoneyPage: React.FC = () => {
   const [pin, setPin] = useState('');
   const [step, setStep] = useState<'input' | 'review'>('input');
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [isAutofillModalOpen, setIsAutofillModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [recipient, setRecipient] = useState<Recipient | null>(null);
@@ -33,7 +35,6 @@ const SendMoneyPage: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Load recent recipients from safeStorage
     try {
       const storedRecents = safeStorage.getItem('recentRecipients');
       if (storedRecents) {
@@ -55,7 +56,6 @@ const SendMoneyPage: React.FC = () => {
     }
   };
 
-
   useEffect(() => {
     const timer = setTimeout(async () => {
       const m = mobile.trim();
@@ -64,13 +64,13 @@ const SendMoneyPage: React.FC = () => {
         setError('');
         try {
           const result = await googleSheetService.getUserByMobile(`0${m}`);
-          if ('error' in result) {
+          if (result && 'error' in result) {
             setError('প্রাপক খুঁজে পাওয়া যায়নি');
             setRecipient(null);
-          } else if (result.type === UserType.AGENT) {
+          } else if (result && 'type' in result && result.type === UserType.AGENT) {
             setError('এজেন্ট নাম্বারে সেন্ড মানি করা যাবে না');
             setRecipient(null);
-          } else {
+          } else if (result && 'name' in result) {
             setRecipient({ name: result.name, mobile: result.mobile });
           }
         } catch {
@@ -103,14 +103,20 @@ const SendMoneyPage: React.FC = () => {
       setError('পর্যাপ্ত ব্যালেন্স নেই');
       return;
     }
-    if (pin.length !== 4) {
+    
+    const enteredPin = String(pin).trim();
+    const storedPin = String(user.password).padStart(4, '0');
+    
+    if (enteredPin.length !== 4) {
       setError('৪-সংখ্যার পিন দিন');
       return;
     }
-    if (pin !== user?.password) {
+    
+    if (enteredPin !== storedPin) {
       setError('ভুল পিন। আবার চেষ্টা করুন।');
       return;
     }
+    
     setStep('review');
   };
 
@@ -136,7 +142,14 @@ const SendMoneyPage: React.FC = () => {
   };
   
   const handleSelectRecent = (recent: Recipient) => {
-    setMobile(recent.mobile.slice(3)); // Remove +88
+    setMobile(recent.mobile.slice(3)); 
+  };
+
+  const handleAutofillConfirm = () => {
+    setIsAutofillModalOpen(false);
+    // Simulated scan data
+    setMobile('1700000000'); 
+    setAmount('500');
   };
 
   const renderInputScreen = () => (
@@ -154,7 +167,15 @@ const SendMoneyPage: React.FC = () => {
                 prefix="+880"
                 maxLength={10}
               />
-              {isVerifying && <div className="absolute right-4 bottom-4"><div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full"></div></div>}
+              <button 
+                type="button"
+                onClick={() => setIsAutofillModalOpen(true)}
+                className="auto-fill-btn absolute right-4 top-[38px] p-2 bg-primary/10 text-primary rounded-xl hover:bg-primary/20 transition-all active:scale-90"
+                title={t('scanQR')}
+              >
+                <ScanIcon className="w-5 h-5" />
+              </button>
+              {isVerifying && <div className="absolute right-14 bottom-4"><div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full"></div></div>}
               {recipient && <p className="text-xs text-green-600 font-bold mt-1 px-1 tracking-tight">✓ {recipient.name}</p>}
             </div>
             
@@ -188,7 +209,7 @@ const SendMoneyPage: React.FC = () => {
                     label={t('enterPIN')}
                     type="password"
                     value={pin}
-                    onChange={(e) => setPin(e.target.value)}
+                    onChange={(e) => setPin(e.target.value.replace(/[^0-9]/g, ''))}
                     required
                     placeholder="••••"
                     maxLength={4}
@@ -212,7 +233,6 @@ const SendMoneyPage: React.FC = () => {
         <h2 className="text-xl font-bold text-center text-gray-800 dark:text-dark-text">{t('confirmSendMoney')}</h2>
          
         <div className="flex items-center justify-center space-x-2">
-            {/* From Card */}
             <div className="w-1/3 text-center">
                 <div className="w-16 h-16 bg-gray-100 dark:bg-dark-surface rounded-full flex items-center justify-center mb-2 mx-auto shadow-sm">
                     <UserIcon className="w-8 h-8 text-gray-400 dark:text-gray-500" />
@@ -225,7 +245,6 @@ const SendMoneyPage: React.FC = () => {
                 <ArrowRightIcon className="w-5 h-5 text-gray-400"/>
             </div>
             
-            {/* To Card */}
             <div className="w-1/3 text-center">
                 <div className="w-16 h-16 bg-gray-100 dark:bg-dark-surface rounded-full flex items-center justify-center mb-2 mx-auto shadow-sm">
                     <UserIcon className="w-8 h-8 text-primary" />
@@ -281,6 +300,14 @@ const SendMoneyPage: React.FC = () => {
         title="সেন্ড মানি সফল হয়েছে"
         amount={parseFloat(amount)}
         recipient={recipient?.name}
+      />
+
+      <ConfirmationModal 
+        isOpen={isAutofillModalOpen}
+        onClose={() => setIsAutofillModalOpen(false)}
+        onConfirm={handleAutofillConfirm}
+        title={t('autofillTitle')}
+        message={t('autofillMessage')}
       />
     </div>
   );

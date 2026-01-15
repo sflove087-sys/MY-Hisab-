@@ -6,6 +6,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import Logo from '../components/Logo';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
+import BiometricModal from '../components/common/BiometricModal';
 import { safeStorage } from '../utils/storage';
 
 // Helper to get initials from a name
@@ -20,11 +21,12 @@ const getInitials = (name: string = ''): string => {
 
 
 const LoginPage: React.FC = () => {
-  const [lastActiveUser, setLastActiveUser] = useState<{name: string; mobile: string} | null>(null);
+  const [lastActiveUser, setLastActiveUser] = useState<{name: string; mobile: string; biometricsEnabled?: boolean} | null>(null);
   const [loginIdentifier, setLoginIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isBiometricModalOpen, setIsBiometricModalOpen] = useState(false);
 
   const { login } = useAuth();
   const { language, toggleLanguage, t } = useLanguage();
@@ -43,19 +45,21 @@ const LoginPage: React.FC = () => {
     }
   }, []);
 
-  const handleLoginSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLoginSubmit = async (e?: React.FormEvent, bypassPassword?: string) => {
+    if (e) e.preventDefault();
     setIsLoading(true);
     setError('');
 
-    if (!loginIdentifier || !password) {
+    const targetPassword = bypassPassword || password;
+
+    if (!loginIdentifier || !targetPassword) {
       setError(language === 'bn' ? 'মোবাইল/ইমেল এবং পিন দিন।' : 'Please enter mobile/email and PIN.');
       setIsLoading(false);
       return;
     }
 
     try {
-      const user = await login(loginIdentifier, password);
+      const user = await login(loginIdentifier, targetPassword);
       if (!user) {
         setError(language === 'bn' ? 'মোবাইল/ইমেল বা পিন ভুল।' : 'Incorrect mobile/email or PIN.');
       }
@@ -63,6 +67,23 @@ const LoginPage: React.FC = () => {
       setError(language === 'bn' ? 'সার্ভারে সমস্যা হচ্ছে। আবার চেষ্টা করুন।' : 'Server error. Please try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleBiometricSuccess = () => {
+    setIsBiometricModalOpen(false);
+    // Retrieve stored credential for biometric login
+    const biometricKey = safeStorage.getItem(`biometric_key_${lastActiveUser?.mobile}`);
+    if (biometricKey) {
+        try {
+            // Decrypt/Decode stored PIN
+            const decodedPin = atob(biometricKey); 
+            handleLoginSubmit(undefined, decodedPin);
+        } catch (e) {
+            setError(t('biometricsFailed'));
+        }
+    } else {
+        setError(t('biometricsFailed'));
     }
   };
 
@@ -99,8 +120,19 @@ const LoginPage: React.FC = () => {
             <form onSubmit={handleLoginSubmit} className="space-y-4">
                 {lastActiveUser ? (
                     <div className="flex flex-col items-center text-center -mt-8 mb-4">
-                        <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-4 border-4 border-white dark:border-dark-bg shadow-md">
+                        <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-4 border-4 border-white dark:border-dark-bg shadow-md group relative">
                             <span className="text-4xl font-bold text-primary">{getInitials(lastActiveUser.name)}</span>
+                            {lastActiveUser.biometricsEnabled && (
+                                <button 
+                                    type="button"
+                                    onClick={() => setIsBiometricModalOpen(true)}
+                                    className="absolute -bottom-1 -right-1 w-10 h-10 bg-white dark:bg-dark-surface rounded-full flex items-center justify-center shadow-lg border border-gray-100 dark:border-dark-border active:scale-90 transition-transform text-primary"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A10.003 10.003 0 0112 3c4.183 0 7.773 2.564 9.303 6.216m-6.918 10.29A10.014 10.014 0 0112 21c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-6.103m4.626 10.232a4.115 4.115 0 01-.461-1.929V11m5.22 10.125a9.991 9.991 0 005.466-4.417m-9.039 4.34A10.011 10.011 0 0112 21c-1.35 0-2.645-.268-3.829-.755" />
+                                    </svg>
+                                </button>
+                            )}
                         </div>
                          <p className="text-sm font-bold text-gray-500 dark:text-dark-subtext">{lastActiveUser.mobile}</p>
                     </div>
@@ -116,19 +148,32 @@ const LoginPage: React.FC = () => {
                     />
                 )}
 
-                <Input 
-                    label={t('pin')}
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value.replace(/[^0-9]/g, ''))}
-                    maxLength={4}
-                    inputMode="numeric"
-                    placeholder="••••"
-                    required
-                    autoFocus={!!lastActiveUser}
-                    className="text-center text-3xl tracking-[1em] font-mono"
-                />
+                <div className="relative">
+                  <Input 
+                      label={t('pin')}
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value.replace(/[^0-9]/g, ''))}
+                      maxLength={4}
+                      inputMode="numeric"
+                      placeholder="••••"
+                      required
+                      autoFocus={!!lastActiveUser}
+                      className="text-center text-3xl tracking-[1em] font-mono"
+                  />
+                  {lastActiveUser?.biometricsEnabled && !lastActiveUser && (
+                      <button 
+                        type="button"
+                        onClick={() => setIsBiometricModalOpen(true)}
+                        className="absolute right-4 bottom-4 p-2 text-primary"
+                      >
+                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A10.003 10.003 0 0112 3c4.183 0 7.773 2.564 9.303 6.216m-6.918 10.29A10.014 10.014 0 0112 21c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-6.103m4.626 10.232a4.115 4.115 0 01-.461-1.929V11m5.22 10.125a9.991 9.991 0 005.466-4.417m-9.039 4.34A10.011 10.011 0 0112 21c-1.35 0-2.645-.268-3.829-.755" />
+                         </svg>
+                      </button>
+                  )}
+                </div>
                 
                 <Button 
                     type="submit"
@@ -173,6 +218,13 @@ const LoginPage: React.FC = () => {
                 </div>
             </div>
         </div>
+
+        <BiometricModal 
+            isOpen={isBiometricModalOpen}
+            onClose={() => setIsBiometricModalOpen(false)}
+            onSuccess={handleBiometricSuccess}
+            userName={lastActiveUser?.name}
+        />
     </div>
   );
 };

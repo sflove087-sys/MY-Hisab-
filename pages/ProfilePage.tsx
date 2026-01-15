@@ -1,17 +1,59 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { themes } from '../utils/themes';
 import { UserIcon } from '../components/Icons';
+import { safeStorage } from '../utils/storage';
 
 const ProfilePage: React.FC = () => {
   const { user, logout } = useAuth();
   const { t, language, toggleLanguage } = useLanguage();
   const { mode, toggleMode, colorTheme, setColorTheme } = useTheme();
   const navigate = useNavigate();
+
+  const [biometricsEnabled, setBiometricsEnabled] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+        try {
+            const lastActiveUser = safeStorage.getItem('lastActiveUser');
+            if (lastActiveUser) {
+                const parsed = JSON.parse(lastActiveUser);
+                setBiometricsEnabled(parsed.biometricsEnabled || false);
+            }
+        } catch (e) {
+            console.error("Failed to load biometric setting:", e);
+        }
+    }
+  }, [user]);
+
+  const toggleBiometrics = () => {
+    const newValue = !biometricsEnabled;
+    setBiometricsEnabled(newValue);
+    
+    try {
+        const lastActiveUser = safeStorage.getItem('lastActiveUser');
+        if (lastActiveUser && user) {
+            const parsed = JSON.parse(lastActiveUser);
+            parsed.biometricsEnabled = newValue;
+            safeStorage.setItem('lastActiveUser', JSON.stringify(parsed));
+            
+            if (newValue) {
+                // Store "encrypted" (base64 for demo) credential for login
+                // In a real app, this would be a secure token managed by WebAuthn
+                safeStorage.setItem(`biometric_key_${user.mobile}`, btoa(user.password));
+                alert(t('biometricsEnabled'));
+            } else {
+                safeStorage.removeItem(`biometric_key_${user.mobile}`);
+            }
+        }
+    } catch (e) {
+        console.error("Failed to toggle biometrics:", e);
+    }
+  };
   
   const getThemeSwatchStyle = (style: string) => {
       switch(style) {
@@ -37,6 +79,27 @@ const ProfilePage: React.FC = () => {
       </div>
       
       <div className="space-y-4">
+        {/* Biometrics Toggle */}
+        <div className="bg-white dark:bg-dark-surface p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-dark-border flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A10.003 10.003 0 0112 3c4.183 0 7.773 2.564 9.303 6.216m-6.918 10.29A10.014 10.014 0 0112 21c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-6.103m4.626 10.232a4.115 4.115 0 01-.461-1.929V11m5.22 10.125a9.991 9.991 0 005.466-4.417m-9.039 4.34A10.011 10.011 0 0112 21c-1.35 0-2.645-.268-3.829-.755" />
+                    </svg>
+                </div>
+                <div>
+                    <p className="font-bold text-sm text-gray-800 dark:text-dark-text">{t('enableBiometrics')}</p>
+                    <p className="text-[10px] text-gray-500 dark:text-dark-subtext uppercase font-bold tracking-widest">{biometricsEnabled ? 'সক্রিয় আছে' : 'নিষ্ক্রিয় আছে'}</p>
+                </div>
+            </div>
+            <button 
+                onClick={toggleBiometrics}
+                className={`w-12 h-6 rounded-full p-1 flex items-center transition-all duration-300 ${biometricsEnabled ? 'bg-primary' : 'bg-gray-200 dark:bg-dark-border'}`}
+            >
+                <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${biometricsEnabled ? 'translate-x-6' : 'translate-x-0'}`}></div>
+            </button>
+        </div>
+
         <div className="bg-white dark:bg-dark-surface p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-dark-border">
             <h3 className="text-sm font-bold text-gray-700 dark:text-dark-text px-2 mb-3">{t('changeTheme')}</h3>
             <div className="grid grid-cols-5 gap-3 px-2">

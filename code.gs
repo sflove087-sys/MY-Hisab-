@@ -169,8 +169,8 @@ function loginUser(loginIdentifier, password) {
   if (user) {
     user.balance = parseFloat(user.balance) || 0;
     user.commission = parseFloat(user.commission) || 0;
-    // We NO LONGER delete password here so frontend local validation works.
-    // In a production app, we would use a token-based system.
+    // Normalize password before returning to frontend
+    user.password = String(user.password).padStart(4, '0');
   }
   return user || null;
 }
@@ -185,7 +185,7 @@ function addUser(name, mobile, email, password) {
     if (findUserRowIndexByMobile(usersData, usersDisplayData, mobile) !== -1) return { status: 'Failed', error: 'Mobile exists.' };
     const newId = `user_${new Date().getTime()}`;
     usersSheet.appendRow([newId, name, `'${mobile}`, email, `'${password}`, 0, 'Personal', 0]);
-    return { status: 'Success', user: { id: newId, name: name, mobile: mobile, email: email, balance: 0, type: 'Personal', password: password } };
+    return { status: 'Success', user: { id: newId, name: name, mobile: mobile, email: email, balance: 0, type: 'Personal', password: String(password).padStart(4, '0') } };
   });
 }
 
@@ -197,7 +197,8 @@ function getUserById(id) {
   if (user) {
     user.balance = parseFloat(user.balance) || 0;
     user.commission = parseFloat(user.commission) || 0;
-    // We NO LONGER delete password here to maintain local session consistency.
+    // Normalize password before returning to frontend
+    user.password = String(user.password).padStart(4, '0');
   }
   return user || null;
 }

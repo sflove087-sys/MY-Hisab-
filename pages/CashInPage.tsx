@@ -4,11 +4,12 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import Input from '../components/common/Input';
 import SuccessModal from '../components/common/SuccessModal';
+import ConfirmationModal from '../components/common/ConfirmationModal';
 import TapAndHoldButton from '../components/common/TapAndHoldButton';
 import { googleSheetService } from '../services/googleSheetService';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/common/PageHeader';
-import { UserIcon, ArrowRightIcon } from '../components/Icons';
+import { UserIcon, ArrowRightIcon, ScanIcon } from '../components/Icons';
 
 const CashInPage: React.FC = () => {
   const [customerMobile, setCustomerMobile] = useState('');
@@ -18,6 +19,7 @@ const CashInPage: React.FC = () => {
   const [pin, setPin] = useState('');
   const [step, setStep] = useState<'input' | 'review'>('input');
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [isAutofillModalOpen, setIsAutofillModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const { user, refreshUser } = useAuth();
@@ -93,6 +95,13 @@ const CashInPage: React.FC = () => {
     }
   };
 
+  const handleAutofillConfirm = () => {
+    setIsAutofillModalOpen(false);
+    // Simulated scan data for a customer
+    setCustomerMobile('1600000000'); 
+    setAmount('2000');
+  };
+
   const renderInputScreen = () => (
     <div className="bg-white dark:bg-dark-surface p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-dark-border">
       <p className="text-center text-gray-400 dark:text-dark-subtext text-[9px] font-bold uppercase tracking-widest -mt-4 mb-8">গ্রাহকের অ্যাকাউন্টে টাকা জমা দিন</p>
@@ -109,7 +118,15 @@ const CashInPage: React.FC = () => {
             prefix="+880"
             maxLength={10}
           />
-          {isVerifying && <div className="absolute right-4 bottom-4"><div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full"></div></div>}
+          <button 
+                type="button"
+                onClick={() => setIsAutofillModalOpen(true)}
+                className="auto-fill-btn absolute right-4 top-[38px] p-2 bg-primary/10 text-primary rounded-xl hover:bg-primary/20 transition-all active:scale-90"
+                title={t('scanQR')}
+            >
+                <ScanIcon className="w-5 h-5" />
+            </button>
+          {isVerifying && <div className="absolute right-14 bottom-4"><div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full"></div></div>}
           {customerName && <p className="text-xs text-green-600 font-bold mt-1 px-1">✓ গ্রাহক: {customerName}</p>}
         </div>
 
@@ -152,7 +169,6 @@ const CashInPage: React.FC = () => {
     <div className="space-y-6">
         <h2 className="text-xl font-bold text-center text-gray-800 dark:text-dark-text">{t('confirmCashIn')}</h2>
         <div className="flex items-center justify-center space-x-2">
-            {/* From Card */}
             <div className="w-1/3 text-center">
                 <div className="w-16 h-16 bg-gray-100 dark:bg-dark-surface rounded-full flex items-center justify-center mb-2 mx-auto shadow-sm">
                     <UserIcon className="w-8 h-8 text-gray-400 dark:text-gray-500" />
@@ -165,7 +181,6 @@ const CashInPage: React.FC = () => {
                 <ArrowRightIcon className="w-5 h-5 text-gray-400"/>
             </div>
             
-            {/* To Card */}
             <div className="w-1/3 text-center">
                 <div className="w-16 h-16 bg-gray-100 dark:bg-dark-surface rounded-full flex items-center justify-center mb-2 mx-auto shadow-sm">
                     <UserIcon className="w-8 h-8 text-primary" />
@@ -219,6 +234,14 @@ const CashInPage: React.FC = () => {
         title="ক্যাশ ইন সফল"
         amount={parseFloat(amount)}
         recipient={customerName}
+      />
+
+      <ConfirmationModal 
+        isOpen={isAutofillModalOpen}
+        onClose={() => setIsAutofillModalOpen(false)}
+        onConfirm={handleAutofillConfirm}
+        title={t('autofillTitle')}
+        message={t('autofillMessage')}
       />
     </div>
   );

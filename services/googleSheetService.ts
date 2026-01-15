@@ -1,7 +1,7 @@
 
 import { User, UserType, Transaction, TransactionType, TransactionStatus } from '../types';
 
-const GOOGLE_SHEET_API_URL: string = 'https://script.google.com/macros/s/AKfycbzrXIJM8d7efl03LtfEctJgtR9v4at2MQvTfP6nJVbXGoUMp5fVe31uz6P2z0nhqLU/exec';
+const GOOGLE_SHEET_API_URL: string = 'https://script.google.com/macros/s/AKfycby38duiRf29kPW_DHkwVSdhmHUZwZ98yx42EkceCLj2N6sfZ3cGUIg6jiJRAxWNqHI_/exec';
 
 class GoogleSheetService {
 

@@ -13,6 +13,8 @@ export const translations = {
     from: 'From',
     to: 'To',
     newBalance: 'New Balance',
+    yes: 'Yes',
+    no: 'No',
     
     // Login & Sign Up
     loginTitle: 'Login to Amar Cash',
@@ -115,6 +117,11 @@ export const translations = {
     pinChangedSuccess: 'PIN changed successfully! Please log in again.',
     pinChangeFailed: 'PIN change failed. Please check your current PIN.',
     currentPinIncorrect: 'Current PIN is incorrect.',
+
+    // Autofill
+    autofillTitle: 'Autofill from Scan?',
+    autofillMessage: 'Would you like to automatically fill the details from the scanned data?',
+    scanQR: 'Scan QR',
   },
   bn: {
     // General
@@ -129,6 +136,8 @@ export const translations = {
     from: 'প্রেরক',
     to: 'প্রাপক',
     newBalance: 'নতুন ব্যালেন্স',
+    yes: 'হ্যাঁ',
+    no: 'না',
 
     // Login & Sign Up
     loginTitle: 'আমার ক্যাশ-এ লগইন করুন',
@@ -231,5 +240,10 @@ export const translations = {
     pinChangedSuccess: 'পিন সফলভাবে পরিবর্তন করা হয়েছে! অনুগ্রহ করে আবার লগইন করুন।',
     pinChangeFailed: 'পিন পরিবর্তন ব্যর্থ হয়েছে। অনুগ্রহ করে আপনার বর্তমান পিন চেক করুন।',
     currentPinIncorrect: 'বর্তমান পিন ভুল।',
+
+    // Autofill
+    autofillTitle: 'স্বয়ংক্রিয়ভাবে পূরণ করবেন?',
+    autofillMessage: 'আপনি কি স্ক্যান করা তথ্য দিয়ে ফরমটি স্বয়ংক্রিয়ভাবে পূরণ করতে চান?',
+    scanQR: 'কিউআর স্ক্যান',
   },
 };
