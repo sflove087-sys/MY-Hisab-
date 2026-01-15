@@ -9,12 +9,12 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 const Input: React.FC<InputProps> = ({ label, id, prefix, className, ...props }) => {
   return (
     <div className="mb-5 group">
-      <label htmlFor={id} className="block text-gray-500 dark:text-dark-subtext text-xs font-bold mb-2 uppercase tracking-widest transition-colors group-focus-within:text-primary">
+      <label htmlFor={id} className="block text-gray-500 dark:text-dark-subtext text-[8px] font-bold mb-2 uppercase tracking-widest transition-colors group-focus-within:text-primary">
         {label}
       </label>
       <div className="relative flex items-center">
         {prefix && (
-          <span className="absolute left-0 pl-5 text-gray-400 dark:text-dark-subtext font-semibold pointer-events-none">
+          <span className="absolute left-0 pl-5 text-gray-400 dark:text-dark-subtext font-semibold pointer-events-none text-[10px]">
             {prefix}
           </span>
         )}
