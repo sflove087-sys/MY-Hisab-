@@ -5,8 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { themes } from '../utils/themes';
-import { UserIcon } from '../components/Icons';
 import { safeStorage } from '../utils/storage';
+import SimInfoCard from '../components/common/SimInfoCard';
 
 const ProfilePage: React.FC = () => {
   const { user, logout } = useAuth();
@@ -65,20 +65,14 @@ const ProfilePage: React.FC = () => {
 
   return (
     <div className="p-4 pb-10">
-      <div className="relative mb-6">
-          <div className="absolute -inset-2 bg-gradient-to-br from-primary to-orange-400 rounded-3xl blur opacity-20"></div>
-          <div className="relative bg-white dark:bg-dark-surface p-6 rounded-2xl shadow-sm text-center border border-gray-100 dark:border-dark-border">
-              <div className="w-20 h-20 bg-gray-100 dark:bg-dark-bg rounded-full flex items-center justify-center mb-4 border-4 border-white dark:border-dark-surface shadow-md mx-auto">
-                <UserIcon className="w-12 h-12 text-gray-400 dark:text-gray-500" />
-              </div>
-              <h2 className="text-xl font-bold text-gray-800 dark:text-dark-text">{user?.name}</h2>
-              <p className="text-gray-500 dark:text-dark-subtext text-[10px] font-bold uppercase tracking-widest mt-1">{user?.mobile}</p>
-          </div>
+      {/* Enhanced Sim Info Card Section */}
+      <div className="mb-8">
+          {user && <SimInfoCard user={user} />}
       </div>
       
       <div className="space-y-4">
         {/* Biometrics Toggle */}
-        <div className="bg-white dark:bg-dark-surface p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-dark-border flex items-center justify-between">
+        <div className="bg-white dark:bg-dark-surface p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-dark-border flex items-center justify-between transition-all hover:shadow-md">
             <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,6 +92,7 @@ const ProfilePage: React.FC = () => {
             </button>
         </div>
 
+        {/* Theme Customization */}
         <div className="bg-white dark:bg-dark-surface p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-dark-border">
             <h3 className="text-[8px] font-black text-gray-400 dark:text-dark-subtext uppercase tracking-[0.3em] px-2 mb-4">{t('changeTheme')}</h3>
             <div className="grid grid-cols-5 gap-3 px-2">
@@ -115,6 +110,7 @@ const ProfilePage: React.FC = () => {
             </div>
         </div>
 
+        {/* Account Settings List */}
         <div className="bg-white dark:bg-dark-surface p-2 rounded-2xl shadow-sm border border-gray-100 dark:border-dark-border">
             <div className="flex justify-between items-center p-3">
                 <span className="font-bold text-sm text-gray-700 dark:text-dark-text">{t('darkMode')}</span>
@@ -140,6 +136,7 @@ const ProfilePage: React.FC = () => {
             </button>
         </div>
 
+        {/* Logout Action */}
         <div className="pt-4">
              <button onClick={logout} className="w-full py-4 bg-red-50 dark:bg-red-500/10 text-red-500 dark:text-red-400 font-black text-xs uppercase tracking-[0.3em] rounded-2xl hover:bg-red-100 dark:hover:bg-red-500/20 transition-all active:scale-95">
                 {t('logout')}

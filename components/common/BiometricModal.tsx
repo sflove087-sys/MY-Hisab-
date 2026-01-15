@@ -30,7 +30,7 @@ const BiometricModal: React.FC<BiometricModalProps> = ({ isOpen, onClose, onSucc
             onSuccess();
           }, 600);
           return () => clearTimeout(successTimer);
-        }, 1200);
+        }, 1500); // Increased time for a more "secure" feel
         return () => clearTimeout(verifyTimer);
       }, 1800);
       
@@ -51,7 +51,7 @@ const BiometricModal: React.FC<BiometricModalProps> = ({ isOpen, onClose, onSucc
 
         <div className="relative z-10">
           <p className="text-[8px] font-black text-primary uppercase tracking-[0.4em] mb-2 animate-pulse">
-            {status === 'scanning' ? 'System Scanning' : status === 'verifying' ? 'Verifying Identity' : 'Authorized'}
+            {status === 'scanning' ? 'Processing Scan...' : status === 'verifying' ? 'Authenticating Identity...' : 'Access Granted'}
           </p>
           
           <h2 className="text-xl font-black text-gray-800 dark:text-dark-text mb-10 leading-tight">
@@ -92,6 +92,10 @@ const BiometricModal: React.FC<BiometricModalProps> = ({ isOpen, onClose, onSucc
               <div className="absolute top-0 left-0 w-full h-1.5 bg-primary/60 rounded-full shadow-[0_0_20px_rgba(var(--color-primary-hsl),0.8)] animate-scan-line-v2 z-20"></div>
             )}
           </div>
+
+          <p className="text-[10px] text-gray-400 dark:text-dark-subtext mb-6 font-bold uppercase tracking-tight">
+            {status === 'success' ? 'Identity Secured' : 'Simulating Device-Level Security'}
+          </p>
 
           <button 
             onClick={onClose}

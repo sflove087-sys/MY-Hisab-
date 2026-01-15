@@ -19,7 +19,7 @@ export const translations = {
     // Login & Sign Up
     loginTitle: 'Login to Amar Cash',
     mobileNumber: 'Mobile Number',
-    mobileOrEmail: 'Mobile Number or Email (Username)',
+    mobileOrEmail: 'Mobile / Email',
     email: 'Email',
     enterOTP: 'Enter OTP',
     enterPIN: 'Enter your PIN to proceed',
@@ -142,7 +142,7 @@ export const translations = {
     // Login & Sign Up
     loginTitle: 'আমার ক্যাশ-এ লগইন করুন',
     mobileNumber: 'মোবাইল নম্বর',
-    mobileOrEmail: 'মোবাইল নম্বর বা ইমেল (ইউজারনেম)',
+    mobileOrEmail: 'মোবাইল / ইমেল',
     email: 'ইমেল',
     enterOTP: 'ওটিপি দিন',
     enterPIN: 'এগিয়ে যেতে আপনার পিন দিন',
