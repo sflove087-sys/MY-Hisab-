@@ -2,6 +2,7 @@
   "name": "আমার ক্যাশ",
   "description": "নগদ-এর মতো প্রিমিয়াম মোবাইল ওয়ালেট অ্যাপ।",
   "requestFramePermissions": [
-    "microphone"
+    "microphone",
+    "camera"
   ]
 }

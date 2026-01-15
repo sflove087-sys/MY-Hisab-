@@ -13,17 +13,32 @@ class GoogleSheetService {
       const response = await fetch(url.toString(), {
         method: 'GET',
         redirect: 'follow',
+        headers: {
+            'Accept': 'application/json',
+        }
       });
-      if (!response.ok) throw new Error(`API error ${response.status}`);
-      return response.json();
-    } catch (error) {
-      console.error('API Error:', error);
+      
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'No error details');
+        throw new Error(`API error ${response.status}: ${errorText}`);
+      }
+      
+      const data = await response.json();
+      if (data && typeof data === 'object' && 'error' in data) {
+          throw new Error(data.error);
+      }
+      return data;
+    } catch (error: any) {
+      console.error('API Fetch Detailed Error:', error);
+      // Re-throw a more user-friendly error if it's a network failure
+      if (error.message === 'Failed to fetch') {
+          throw new Error('Network error: Please check your internet connection or the API service status.');
+      }
       throw error;
     }
   }
 
   async loginUser(identifier: string, password: string): Promise<User | null> {
-    // The backend `loginUser` function now handles both email and mobile via the same parameter.
     return this.apiFetch({ action: 'login', email: identifier, password });
   }
   
@@ -40,8 +55,13 @@ class GoogleSheetService {
   }
   
   async getTransactionsForUser(userId: string): Promise<Transaction[]> {
-    const transactions = await this.apiFetch({ action: 'getTransactionsForUser', userId });
-    return transactions || [];
+    try {
+      const transactions = await this.apiFetch({ action: 'getTransactionsForUser', userId });
+      return transactions || [];
+    } catch (e) {
+      console.warn("Failed to fetch user transactions, returning empty array:", e);
+      return [];
+    }
   }
 
   async getTransactionById(transactionId: string): Promise<Transaction | null> {

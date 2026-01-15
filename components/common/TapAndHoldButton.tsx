@@ -16,7 +16,7 @@ const TapAndHoldButton: React.FC<TapAndHoldButtonProps> = ({ onComplete, isLoadi
   const completedRef = useRef(false);
   const { t } = useLanguage();
 
-  const HOLD_DURATION = 2000; // 2 seconds
+  const HOLD_DURATION = 2200; // 2.2 seconds for a deliberate feel
 
   const cleanupTimer = () => {
     if (timerRef.current) {
@@ -26,19 +26,16 @@ const TapAndHoldButton: React.FC<TapAndHoldButtonProps> = ({ onComplete, isLoadi
   };
 
   useEffect(() => {
-    // When a transaction is finished (e.g., failed) and isLoading is reset to false,
-    // also reset the button's internal state so it can be used again.
     if (!isLoading && completedRef.current) {
       completedRef.current = false;
       setProgress(0);
     }
   }, [isLoading]);
 
-
   const startHolding = () => {
     if (isLoading || isHolding) return;
     
-    completedRef.current = false; // Reset completion for a new hold
+    completedRef.current = false;
     setIsHolding(true);
     startTimeRef.current = Date.now();
     
@@ -47,26 +44,26 @@ const TapAndHoldButton: React.FC<TapAndHoldButtonProps> = ({ onComplete, isLoadi
       const newProgress = Math.min((elapsed / HOLD_DURATION) * 100, 100);
       setProgress(newProgress);
       
-      // onComplete is called as soon as the hold is complete.
       if (newProgress >= 100 && !completedRef.current) {
-        completedRef.current = true; // Prevents multiple calls
+        completedRef.current = true;
         cleanupTimer();
+        // Visual "pop" on completion
+        const vibrate = window.navigator.vibrate;
+        if (vibrate) vibrate([50, 30, 50]);
         onComplete();
-        setIsHolding(false); // Hide "release to cancel" tooltip
+        setIsHolding(false);
       }
-    }, 20);
+    }, 16); // ~60fps
   };
 
   const stopHolding = () => {
     setIsHolding(false);
     cleanupTimer();
-    // If the hold was released before completing, reset the progress bar.
     if (!completedRef.current) {
         setProgress(0);
     }
   };
 
-  // Cleanup on component unmount
   useEffect(() => {
     return () => cleanupTimer();
   }, []);
@@ -80,62 +77,87 @@ const TapAndHoldButton: React.FC<TapAndHoldButtonProps> = ({ onComplete, isLoadi
         onTouchStart={startHolding}
         onTouchEnd={stopHolding}
         disabled={isLoading}
-        className={`w-full h-14 bg-gray-50 dark:bg-dark-surface border border-gray-200 dark:border-gray-800 rounded-full overflow-hidden relative transition-all active:scale-[0.98] ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}
+        className={`w-full h-16 bg-gray-100 dark:bg-dark-surface rounded-[1.5rem] overflow-hidden relative transition-all duration-300 active:scale-[0.96] shadow-inner-sm border border-gray-200 dark:border-dark-border ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}
       >
-        {/* Progress Fill Background */}
-        <div 
-          className="absolute top-0 left-0 h-full bg-primary/20 dark:bg-primary-dark/20 transition-all ease-out"
-          style={{ width: `${progress}%` }}
-        ></div>
-        
-        {/* The Animated "Sun" Icon moving from left to right */}
-        <div 
-            className="absolute top-1/2 -translate-y-1/2 w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-lg transition-all ease-linear z-20"
-            style={{ 
-              left: `calc(${progress}% - 16px)`, // 16px is half of the icon's width (w-8 -> 2rem -> 32px)
-              opacity: progress > 0 ? 1 : 0.3,
-            }}
-        >
-            <svg className="w-5 h-5 text-white animate-spin-slow" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4.243 3.05a1 1 0 011.414 0l.707.707a1 1 0 11-1.414 1.414l-.707-.707a1 1 0 010-1.414zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zm-3.05 4.243a1 1 0 110 1.414l-.707.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM10 18a1 1 0 01-1-1v-1a1 1 0 112 0v1a1 1 0 01-1 1zm-4.243-3.05a1 1 0 01-1.414 0l-.707-.707a1 1 0 011.414-1.414l.707.707a1 1 0 010 1.414zM2 10a1 1 0 011-1h1a1 1 0 110 2H3a1 1 0 01-1-1zm3.05-4.243a1 1 0 010-1.414l.707-.707a1 1 0 011.414 1.414l-.707.707a1 1 0 01-1.414 0zM10 7a3 3 0 100 6 3 3 0 000-6z" clipRule="evenodd" />
+        {/* Futuristic Grid Background Layer */}
+        <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
+            <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                <defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="currentColor" strokeWidth="1"/></pattern></defs>
+                <rect width="100%" height="100%" fill="url(#grid)" />
             </svg>
         </div>
 
-        {/* The Full Width Shimmer Path */}
-        <div className="absolute inset-0 bg-primary/5 rounded-full"></div>
+        {/* The Filling "Liquid" Layer */}
+        <div 
+          className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary via-primary to-orange-400 transition-all duration-75 ease-out shadow-[0_0_30px_rgba(241,77,35,0.4)]"
+          style={{ width: `${progress}%` }}
+        >
+            {/* Animated Light Sheen on progress head */}
+            <div className="absolute right-0 top-0 bottom-0 w-8 bg-white/30 blur-md skew-x-12 animate-pulse"></div>
+            
+            {/* Bubble Particles (Simulated with simple spans) */}
+            <div className={`absolute right-2 top-1/2 -translate-y-1/2 flex space-x-1 ${isHolding ? 'opacity-100' : 'opacity-0'}`}>
+                <div className="w-1 h-1 bg-white rounded-full animate-ping [animation-duration:1s]"></div>
+                <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping [animation-duration:1.5s]"></div>
+            </div>
+        </div>
+        
+        {/* Scanning Line (Active when holding) */}
+        {isHolding && (
+            <div 
+                className="absolute top-0 bottom-0 w-0.5 bg-white/50 z-20 shadow-[0_0_15px_#fff]"
+                style={{ left: `${progress}%` }}
+            ></div>
+        )}
 
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          {isLoading ? (
-            <div className="flex items-center space-x-2">
-                <svg className="animate-spin h-4 w-4 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span className="font-bold text-primary dark:text-primary-dark text-[10px]">{t('loading')}</span>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center">
-                <span className={`text-[10px] font-black tracking-tight ${progress > 80 ? 'opacity-0' : 'text-primary'}`}>
-                    {label}
+        {/* Content Container */}
+        <div className="absolute inset-0 flex items-center justify-between px-6 z-30 pointer-events-none">
+            <div className="flex flex-col items-start">
+                <span className={`text-[10px] font-black uppercase tracking-[0.2em] transition-colors duration-300 ${progress > 50 ? 'text-white' : 'text-primary'}`}>
+                   {isLoading ? t('loading') : (isHolding ? 'নিশ্চিত হচ্ছে...' : label)}
                 </span>
+                {isHolding && progress < 100 && (
+                     <span className="text-[7px] font-bold text-white/70 uppercase tracking-widest animate-pulse mt-0.5">
+                        ধরে রাখুন... {Math.round(progress)}%
+                     </span>
+                )}
             </div>
-          )}
+
+            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-300 ${progress > 85 ? 'bg-white text-primary rotate-12 scale-110 shadow-lg' : 'bg-primary/10 text-primary'}`}>
+                {isLoading ? (
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                ) : (
+                    <svg className={`w-6 h-6 ${isHolding ? 'animate-bounce' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A10.003 10.003 0 0112 3c4.183 0 7.773 2.564 9.303 6.216m-6.918 10.29A10.014 10.014 0 0112 21c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-6.103m4.626 10.232a4.115 4.115 0 01-.461-1.929V11m5.22 10.125a9.991 9.991 0 005.466-4.417m-9.039 4.34A10.011 10.011 0 0112 21c-1.35 0-2.645-.268-3.829-.755" />
+                    </svg>
+                )}
+            </div>
         </div>
       </button>
       
+      {/* Floating Instructions Tooltip */}
       {isHolding && progress < 100 && (
-          <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[8px] py-1 px-3 rounded-full animate-bounce font-bold tracking-widest uppercase shadow-xl z-50">
-              বাতিল করতে ছেড়ে দিন
+          <div className="absolute -top-12 left-1/2 -translate-x-1/2 px-4 py-2 bg-gray-900/90 backdrop-blur-md text-white text-[8px] font-black rounded-xl shadow-2xl animate-in slide-in-from-bottom-2 duration-300 uppercase tracking-widest flex items-center space-x-2 border border-white/10">
+              <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-ping"></span>
+              <span>বাতিল করতে ছেড়ে দিন</span>
+          </div>
+      )}
+
+      {/* Finishing Celebration Sparkle (Hidden by default) */}
+      {progress === 100 && (
+          <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">
+               <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
           </div>
       )}
 
       <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes spin-slow {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        .animate-spin-slow {
-          animation: spin-slow 8s linear infinite;
+        @keyframes liquid-fill {
+          0% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
+          50% { border-radius: 60% 40% 30% 70% / 50% 60% 50% 40%; }
+          100% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
         }
       `}} />
     </div>

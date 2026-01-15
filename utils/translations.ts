@@ -23,7 +23,7 @@ export const translations = {
     email: 'Email',
     enterOTP: 'Enter OTP',
     enterPIN: 'Enter your PIN to proceed',
-    password: 'PIN', // Kept for legacy key, but label is PIN
+    password: 'PIN',
     login: 'Login',
     signUpTitle: 'Sign Up for Amar Cash',
     fullName: 'Full Name',
@@ -49,7 +49,7 @@ export const translations = {
     // Bottom Nav
     bottomNavHome: 'Home',
     bottomNavHistory: 'History',
-    bottomNavProfile: 'My Account',
+    bottomNavProfile: 'Account',
 
     // Dashboard
     dashboard: 'Dashboard',
@@ -105,8 +105,11 @@ export const translations = {
     profileTitle: 'My Profile',
     changePin: 'Change PIN',
     logout: 'Logout',
-    changeTheme: 'Change Theme',
-    darkMode: 'Dark Mode',
+    changeTheme: 'Visual Experience',
+    darkMode: 'Display Mode',
+    systemDefault: 'System Default',
+    lightMode: 'Light',
+    darkModeOption: 'Dark',
     language: 'Language',
 
     // Change PIN
@@ -146,7 +149,7 @@ export const translations = {
     email: 'ইমেল',
     enterOTP: 'ওটিপি দিন',
     enterPIN: 'এগিয়ে যেতে আপনার পিন দিন',
-    password: 'পিন', // Kept for legacy key, but label is PIN
+    password: 'পিন',
     login: 'লগইন',
     signUpTitle: 'আমার ক্যাশ-এ সাইন আপ করুন',
     fullName: 'পুরো নাম',
@@ -172,7 +175,7 @@ export const translations = {
     // Bottom Nav
     bottomNavHome: 'হোম',
     bottomNavHistory: 'লেনদেন',
-    bottomNavProfile: 'আমার অ্যাকাউন্ট',
+    bottomNavProfile: 'অ্যাকাউন্ট',
 
     // Dashboard
     dashboard: 'ড্যাশবোর্ড',
@@ -228,8 +231,11 @@ export const translations = {
     profileTitle: 'আমার প্রোফাইল',
     changePin: 'পিন পরিবর্তন',
     logout: 'লগ আউট',
-    changeTheme: 'থিম পরিবর্তন',
-    darkMode: 'ডার্ক মোড',
+    changeTheme: 'ভিজ্যুয়াল অভিজ্ঞতা',
+    darkMode: 'ডিসপ্লে মোড',
+    systemDefault: 'সিস্টেম ডিফল্ট',
+    lightMode: 'লাইট',
+    darkModeOption: 'ডার্ক',
     language: 'ভাষা',
 
     // Change PIN

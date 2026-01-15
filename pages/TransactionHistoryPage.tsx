@@ -22,19 +22,19 @@ const TransactionItem: React.FC<{ transaction: Transaction, currentUserId: strin
   const otherParty = isDebit ? transaction.toName : transaction.fromName;
 
   return (
-    <button onClick={onClick} className="w-full text-left flex items-center p-3 bg-white dark:bg-dark-surface rounded-lg mb-2 border border-transparent hover:bg-gray-50 dark:hover:bg-dark-bg transition-colors focus:outline-none focus:ring-1 focus:ring-primary/50">
-      <div className={`mr-3 p-2.5 rounded-full ${isDebit ? 'bg-red-50 dark:bg-red-900/20' : 'bg-green-50 dark:bg-green-900/20'}`}>
-        {isDebit ? <ArrowUpIcon className="w-5 h-5 text-red-500" /> : <ArrowDownIcon className="w-5 h-5 text-green-500" />}
+    <button onClick={onClick} className="w-full text-left flex items-center p-4 bg-white dark:bg-dark-surface rounded-2xl mb-3 border border-slate-50 dark:border-dark-border shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all focus:outline-none focus:ring-2 focus:ring-primary/20">
+      <div className={`mr-4 p-3 rounded-2xl ${isDebit ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-500'} dark:bg-opacity-10`}>
+        {isDebit ? <ArrowUpIcon className="w-5 h-5" /> : <ArrowDownIcon className="w-5 h-5" />}
       </div>
       <div className="flex-grow">
-        <p className="font-semibold text-sm text-gray-800 dark:text-dark-text">{transaction.type}</p>
-        <p className="text-xs text-gray-500 dark:text-dark-subtext truncate max-w-[150px]">{otherParty}</p>
+        <p className="text-[11px] font-black uppercase tracking-widest text-slate-800 dark:text-dark-text">{transaction.type}</p>
+        <p className="text-[10px] text-slate-400 font-bold truncate max-w-[140px] mt-0.5">{otherParty}</p>
       </div>
       <div className="text-right">
-        <p className={`font-bold text-base whitespace-nowrap ${isDebit ? 'text-red-500' : 'text-green-500'}`}>
+        <p className={`text-sm font-black whitespace-nowrap ${isDebit ? 'text-rose-500' : 'text-emerald-500'}`}>
           {isDebit ? '-' : '+'}৳{transaction.amount.toLocaleString()}
         </p>
-        <p className="text-[10px] text-gray-400 dark:text-dark-subtext mt-1">{formattedDate}</p>
+        <p className="text-[8px] text-slate-300 font-black uppercase tracking-widest mt-1">{formattedDate}</p>
       </div>
     </button>
   );
@@ -67,12 +67,11 @@ const TransactionHistoryPage: React.FC = () => {
           }
         } catch(error) {
             console.error("Failed to fetch transactions:", error);
-            setTransactions([]); // Clear transactions on error
+            setTransactions([]);
         } finally {
           setIsLoading(false);
         }
       } else {
-        // If user logs out, clear the state
         setTransactions([]);
         setIsLoading(false);
       }
@@ -118,16 +117,20 @@ const TransactionHistoryPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh]">
-        <LoadingSpinner />
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <LoadingSpinner label={language === 'bn' ? 'তথ্য লোড হচ্ছে' : 'Fetching Data'} />
       </div>
     );
   }
   
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-6 text-center text-gray-800 dark:text-dark-text">{t('transactionHistory')}</h1>
-      <div className="space-y-4">
+    <div className="p-6 bg-slate-50 dark:bg-dark-bg min-h-screen pb-24">
+      <div className="text-center mb-10">
+          <h1 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tight">{t('transactionHistory')}</h1>
+          <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.4em] mt-2">Financial Records & Insights</p>
+      </div>
+
+      <div className="space-y-6">
         {user && monthOrder.length > 0 ? (
           monthOrder.map(monthKey => {
             const [year, month] = monthKey.split('-').map(Number);
@@ -136,20 +139,31 @@ const TransactionHistoryPage: React.FC = () => {
             const monthName = new Date(year, month).toLocaleString(language === 'bn' ? 'bn-BD' : 'en-US', { month: 'long', year: 'numeric' });
 
             return (
-              <div key={monthKey} className="bg-white dark:bg-dark-surface/50 rounded-xl shadow-sm border border-gray-100 dark:border-dark-border/50">
-                <button onClick={() => toggleMonth(monthKey)} className="w-full p-4 flex items-center justify-between focus:outline-none">
-                  <div>
-                    <p className="font-bold text-gray-800 dark:text-dark-text text-left">{monthName}</p>
-                    <div className="flex items-center space-x-4 text-[10px] mt-1">
-                       <p className="text-green-500 font-semibold">এসেছে: ৳{monthData.credit.toLocaleString()}</p>
-                       <p className="text-red-500 font-semibold">গিয়েছে: ৳{monthData.debit.toLocaleString()}</p>
+              <div key={monthKey} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <button 
+                  onClick={() => toggleMonth(monthKey)} 
+                  className={`w-full p-6 flex items-center justify-between bg-white dark:bg-dark-surface rounded-[2rem] shadow-sm border border-slate-100 dark:border-dark-border transition-all ${isExpanded ? 'rounded-b-none' : ''}`}
+                >
+                  <div className="text-left">
+                    <p className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-widest">{monthName}</p>
+                    <div className="flex items-center space-x-3 mt-1.5">
+                       <div className="flex items-center space-x-1">
+                          <div className="w-1 h-1 bg-emerald-500 rounded-full"></div>
+                          <span className="text-[8px] text-emerald-500 font-black tracking-widest uppercase">In: ৳{monthData.credit.toLocaleString()}</span>
+                       </div>
+                       <div className="flex items-center space-x-1">
+                          <div className="w-1 h-1 bg-rose-500 rounded-full"></div>
+                          <span className="text-[8px] text-rose-500 font-black tracking-widest uppercase">Out: ৳{monthData.debit.toLocaleString()}</span>
+                       </div>
                     </div>
                   </div>
-                  <ChevronDownIcon className={`w-5 h-5 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                  <div className={`p-2 rounded-xl bg-slate-50 dark:bg-dark-bg transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
+                    <ChevronDownIcon className="w-4 h-4 text-slate-400" />
+                  </div>
                 </button>
                 {isExpanded && (
-                  <div className="px-3 pb-2 animate-in fade-in duration-300">
-                    <div className="border-t border-gray-100 dark:border-dark-border pt-2">
+                  <div className="px-3 pb-4 pt-1 bg-white dark:bg-dark-surface rounded-b-[2rem] shadow-sm border-x border-b border-slate-100 dark:border-dark-border animate-in slide-in-from-top-2 duration-300">
+                    <div className="space-y-1">
                         {monthData.transactions.map(tx => (
                             <TransactionItem 
                                 key={tx.id} 
@@ -166,11 +180,11 @@ const TransactionHistoryPage: React.FC = () => {
             );
           })
         ) : (
-          <div className="text-center p-12 bg-white dark:bg-dark-surface rounded-2xl shadow-sm border border-dashed border-gray-200 dark:border-gray-700">
-            <div className="w-16 h-16 bg-gray-100 dark:bg-dark-bg rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path></svg>
+          <div className="text-center p-12 bg-white dark:bg-dark-surface rounded-[3rem] shadow-premium border border-dashed border-slate-200 dark:border-slate-800">
+            <div className="w-20 h-20 bg-slate-50 dark:bg-dark-bg rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg className="w-10 h-10 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path></svg>
             </div>
-            <p className="text-gray-500 dark:text-dark-subtext font-medium">{t('noTransactions')}</p>
+            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{t('noTransactions')}</p>
           </div>
         )}
       </div>

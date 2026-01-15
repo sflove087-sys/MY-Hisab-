@@ -3,123 +3,101 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>আমার ক্যাশ - ডিজিটাল ওয়ালেট</title>
-    
-    <style>
-      #critical-error-display {
-        background-color: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-        padding: 20px;
-        margin: 20px;
-        border-radius: 8px;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      }
-      #critical-error-display h1 {
-        font-size: 1.5em;
-        margin-bottom: 10px;
-      }
-      #critical-error-display pre {
-        background-color: #f1f1f1;
-        padding: 10px;
-        border-radius: 4px;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        font-size: 0.8em;
-        color: #333;
-      }
-    </style>
-
-    <script>
-      window.onerror = function(message, source, lineno, colno, error) {
-        try {
-          document.body.innerHTML = ''; // Clear the blank screen
-          var container = document.createElement('div');
-          container.id = 'critical-error-display';
-          
-          var title = document.createElement('h1');
-          title.appendChild(document.createTextNode('Application Failed to Load'));
-          
-          var para = document.createElement('p');
-          para.appendChild(document.createTextNode('Please send a screenshot of this error to the developer.'));
-
-          var details = document.createElement('pre');
-          var errorText = "Error: " + message + 
-                        "\nSource: " + source + 
-                        "\nLine: " + lineno + ", Column: " + colno;
-          if (error && error.stack) {
-            errorText += "\n\nStack:\n" + error.stack;
-          }
-          details.appendChild(document.createTextNode(errorText));
-          
-          container.appendChild(title);
-          container.appendChild(para);
-          container.appendChild(details);
-          
-          document.body.appendChild(container);
-        } catch (e) {
-          alert('A critical error occurred, and the error display mechanism also failed. Error: ' + message);
-        }
-        return true; // Prevents the default browser error handling
-      };
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>ডিজিটাল ওয়ালেট - স্মার্ট লেনদেন</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+      :root {
+        --color-primary-hsl: 333 84% 48%; /* bKash Pink Default */
+        --radius-sure: 0.5rem;
+      }
+
+      html {
+        scroll-behavior: smooth;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background-color: #F1F2F3;
+        margin: 0;
+        padding: 0;
+        user-select: none;
+      }
+
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+
+      .shadow-premium {
+        box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1);
+      }
+
+      .page-enter {
+        animation: fadeIn 0.4s ease-out;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      /* Fix for dynamic HSL colors in Tailwind CDN */
+      .bg-primary { background-color: hsl(var(--color-primary-hsl)); }
+      .text-primary { color: hsl(var(--color-primary-hsl)); }
+      .border-primary { border-color: hsl(var(--color-primary-hsl)); }
+    </style>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         darkMode: 'class',
         theme: {
           extend: {
-            fontFamily: {
-              sans: ['Inter', 'sans-serif'],
-            },
             colors: {
-              primary: 'hsl(var(--color-primary-hsl) / <alpha-value>)',
-              secondary: '#ffffff',
+              primary: {
+                DEFAULT: 'hsl(var(--color-primary-hsl) / <alpha-value>)',
+                light: 'hsl(var(--color-primary-hsl) / 0.8)',
+                dark: 'hsl(var(--color-primary-hsl) / 1.2)',
+              },
               dark: {
-                bg: '#0F172A',      // Slate 950 - For main background
-                surface: '#1E293B', // Slate 800 - For cards, panels
-                border: '#334155', // Slate 700 - For borders
-                text: '#F1F5F9',   // Slate 100 - For primary text
-                subtext: '#94A3B8',// Slate 400 - For secondary/muted text
+                bg: '#0F172A',      
+                surface: '#1E293B', 
+                border: '#334155', 
+                text: '#F1F5F9',   
+                subtext: '#94A3B8',
               }
             },
-            boxShadow: {
-              'nagad': '0 4px 15px hsl(var(--color-primary-hsl) / 0.1)',
-            }
+            borderRadius: {
+              'wallet': 'var(--radius-sure)',
+              '4xl': '2.5rem',
+            },
           },
         },
       }
     </script>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@18.2.0",
-    "react/": "https://esm.sh/react@18.2.0/",
-    "react-dom": "https://esm.sh/react-dom@18.2.0",
-    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-    "react-router-dom": "https://esm.sh/react-router-dom@6.22.0?deps=react@18.2.0,react-dom@18.2.0",
-    "react-dom/": "https://esm.sh/react-dom@18.2.0/"
-  }
-}
-</script>
-</head>
-  <body class="bg-gray-50 dark:bg-dark-bg">
-    <noscript>
-      <div style="padding: 20px; font-family: sans-serif; text-align: center;">
-        <h1>JavaScript is Disabled</h1>
-        <p>This application requires JavaScript to run. Please enable it in your browser or WebView settings.</p>
-      </div>
-    </noscript>
-    <div id="root">
-      <div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; color: #999;">
-        <h1>Loading Application...</h1>
-      </div>
-    </div>
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@^19.2.3",
+        "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+        "react/": "https://esm.sh/react@^19.2.3/",
+        "react-router-dom": "https://esm.sh/react-router-dom@^7.12.0"
+      }
+    }
+    </script>
+  </head>
+  <body class="bg-[#F1F2F3] dark:bg-dark-bg text-slate-900 dark:text-dark-text overflow-x-hidden">
+    <div id="root"></div>
     <script type="module" src="./index.tsx"></script>
   </body>
 </html>

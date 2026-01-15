@@ -4,104 +4,110 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { UserType } from '../types';
+import { themes } from '../utils/themes';
 
-interface HeaderProps {
-  onNotificationClick: () => void;
-}
-
-const ThemedHeaderBackground: React.FC = () => {
-    const { designStyle } = useTheme();
-
-    const patterns: Record<string, React.ReactNode> = {
-        oceanic: (
-            <div className="absolute inset-0 opacity-10 mix-blend-soft-light">
-                <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="wave" patternUnits="userSpaceOnUse" width="60" height="60" patternTransform="rotate(45)"><path d="M 0 30 C 15 0 30 0 30 30 S 45 60 60 30" stroke="#fff" strokeWidth="1" fill="none"/></pattern></defs><rect width="100%" height="100%" fill="url(#wave)"/></svg>
-            </div>
-        ),
-        elegant: (
-            <div className="absolute inset-0 opacity-5 mix-blend-overlay">
-                <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="elegant" patternUnits="userSpaceOnUse" width="20" height="20"><path d="M0 0L10 10L0 20" stroke="#fff" strokeWidth="0.5" fill="none"/><path d="M10 0L20 10L10 20" stroke="#fff" strokeWidth="0.5" fill="none"/></pattern></defs><rect width="100%" height="100%" fill="url(#elegant)"/></svg>
-            </div>
-        ),
-        vibrant: <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/10 to-white/0"></div>,
-        natural: <div className="absolute inset-0 opacity-[0.02] bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2240%22%20height%3D%2240%22%20viewBox%3D%220%200%2040%2040%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20fill%3D%22%23ffffff%22%20fill-opacity%3D%221%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20d%3D%22M0%2040L40%200H20L0%2020M40%2040V20L20%2040%22/%3E%3C/g%3E%3C/svg%3E')]"></div>
-    };
-    
-    return patterns[designStyle] || null;
-}
-
-const Header: React.FC<HeaderProps> = ({ onNotificationClick }) => {
+const Header: React.FC<{ onNotificationClick: () => void }> = ({ onNotificationClick }) => {
   const { user } = useAuth();
   const { language } = useLanguage();
   const { unreadCount } = useNotifications();
+  const { colorTheme } = useTheme();
   const [showBalance, setShowBalance] = useState(false);
+  const [isSliding, setIsSliding] = useState(false);
 
-  useEffect(() => {
-    if (showBalance) {
-      const timer = setTimeout(() => setShowBalance(false), 3500);
-      return () => clearTimeout(timer);
-    }
-  }, [showBalance]);
+  const currentTheme = themes[colorTheme] || themes['bkash'];
+  const isBkash = colorTheme === 'bkash';
 
-  const isAgent = user?.type === UserType.AGENT;
+  const toggleBalance = () => {
+    if (showBalance) return;
+    setIsSliding(true);
+    // Vibrate if supported
+    if (window.navigator.vibrate) window.navigator.vibrate(50);
+    
+    setTimeout(() => {
+      setShowBalance(true);
+      setIsSliding(false);
+    }, 400);
+
+    setTimeout(() => {
+      setShowBalance(false);
+    }, 4000);
+  };
 
   return (
-    <header className="bg-primary p-4 pb-12 sticky top-0 z-[100] shadow-nagad overflow-hidden">
-      <ThemedHeaderBackground />
-      <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-2xl pointer-events-none"></div>
-      <div className="absolute -bottom-10 -left-10 w-24 h-24 bg-black/5 rounded-full blur-xl pointer-events-none"></div>
+    <header className="bg-primary pt-12 pb-4 px-4 relative overflow-hidden transition-all duration-500 shadow-md">
+      <div className="relative z-10 flex flex-col space-y-4">
+        {/* Top Navbar */}
+        <div className="flex justify-between items-center">
+          <div className="flex items-center space-x-3">
+             <div className="w-10 h-10 bg-white rounded-full p-1.5 flex items-center justify-center border-2 border-primary/10 shadow-sm overflow-hidden">
+                <img src={user?.type === 'Agent' ? 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' : 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'} alt="Profile" className="w-full h-full object-cover" />
+             </div>
+             <div className="flex flex-col">
+                <span className="text-white text-[10px] font-bold opacity-80 leading-none">{language === 'bn' ? 'স্বাগতম' : 'Welcome'}</span>
+                <span className="text-white text-sm font-black tracking-tight">{user?.name}</span>
+             </div>
+          </div>
 
-      <div className="flex justify-between items-center mb-6 relative">
-        <div className="flex flex-col">
-          <p className="text-white/70 text-[8px] font-bold uppercase tracking-widest">{language === 'bn' ? 'হ্যালো' : 'Hello'}</p>
-          <h2 className="text-white text-sm font-bold tracking-tight truncate max-w-[120px]">
-            {user?.name || 'User'}
-          </h2>
-        </div>
+          <div className="flex items-center">
+             <div className="h-10 px-2 flex items-center justify-center">
+                <img src={currentTheme.logoUrl} alt="Logo" className="h-6 w-auto object-contain brightness-0 invert" />
+             </div>
+          </div>
 
-        <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center">
-            <h1 className="text-white text-xl font-black tracking-tighter drop-shadow-sm">আমার ক্যাশ</h1>
-        </div>
-        
-        <div className="relative">
-            <button onClick={onNotificationClick} className="w-9 h-9 bg-white/15 rounded-full flex items-center justify-center backdrop-blur-md border border-white/10 active:scale-90 transition-transform">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="flex items-center space-x-2">
+             <button onClick={onNotificationClick} className="w-10 h-10 rounded-full flex items-center justify-center relative hover:bg-white/10 transition-colors">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
-                {unreadCount > 0 && (
-                  <div className="absolute -top-1 -right-1 bg-white text-primary text-[9px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-primary animate-bounce">
-                    <span>{unreadCount}</span>
-                  </div>
-                )}
-            </button>
+                {unreadCount > 0 && <div className="absolute top-1 right-1 bg-white text-primary w-4 h-4 rounded-full text-[8px] font-black flex items-center justify-center border border-primary animate-pulse">{unreadCount}</div>}
+             </button>
+          </div>
+        </div>
+
+        {/* Balance Check - The signature bKash Bar */}
+        <div className="flex justify-start">
+           <button 
+             onClick={toggleBalance}
+             className={`h-10 rounded-full bg-white relative transition-all duration-500 overflow-hidden flex items-center shadow-inner ${showBalance ? 'w-52' : 'w-44'}`}
+           >
+              {/* Progress/Slide Overlay */}
+              <div 
+                className={`absolute inset-0 bg-primary/10 transition-transform duration-500 ease-out origin-left ${isSliding ? 'scale-x-100' : 'scale-x-0'}`}
+              ></div>
+
+              {!showBalance ? (
+                <div className="flex items-center px-3 space-x-2.5 animate-in fade-in duration-300">
+                   <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white font-black text-[10px] shadow-sm">৳</div>
+                   <span className="text-primary font-black text-[11px] uppercase tracking-tighter">
+                      {language === 'bn' ? 'ব্যালেন্স দেখুন' : 'Tap for Balance'}
+                   </span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center w-full animate-in slide-in-from-left-4 duration-500">
+                   <span className="text-primary font-black text-lg tracking-tight">
+                      <span className="text-sm mr-1.5 opacity-60 font-bold">৳</span>
+                      {(Number(user?.balance) || 0).toLocaleString()}
+                   </span>
+                </div>
+              )}
+              
+              {/* Shimmer line */}
+              {!showBalance && !isSliding && (
+                <div className="absolute top-0 bottom-0 w-8 bg-gradient-to-r from-transparent via-primary/5 to-transparent skew-x-12 animate-shimmer"></div>
+              )}
+           </button>
         </div>
       </div>
-
-      <div className="flex justify-center -mb-2 relative">
-        {!isAgent ? (
-          <button 
-            onClick={() => setShowBalance(!showBalance)}
-            className="bg-white/95 backdrop-blur-sm dark:bg-dark-surface/80 rounded-full h-10 flex items-center shadow-lg transition-all duration-300 min-w-[200px] relative border border-white/30 dark:border-dark-border active:scale-95 group overflow-hidden"
-          >
-            <div className={`absolute inset-0 flex items-center justify-center w-full px-4 transition-transform duration-300 ease-in-out ${showBalance ? 'transform translate-x-full' : 'transform translate-x-0'}`}>
-              <span className="text-primary text-xs font-bold whitespace-nowrap tracking-tight">
-                  {language === 'en' ? 'Tap for Balance' : 'ব্যালেন্স জানতে ট্যাপ করুন'}
-              </span>
-            </div>
-            <div className={`absolute inset-0 flex items-center justify-center transition-transform duration-300 ease-in-out ${showBalance ? 'transform translate-x-0' : 'transform -translate-x-full'}`}>
-               <span className="text-primary dark:text-white text-lg font-bold tracking-tight">
-                  ৳ {(Number(user?.balance) || 0).toLocaleString()}
-               </span>
-            </div>
-          </button>
-        ) : (
-          <div className="h-10 flex items-center px-5 bg-white/15 rounded-full backdrop-blur-sm border border-white/20 shadow-inner">
-             <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.5)]"></div>
-             <span className="text-white text-xs font-bold tracking-widest uppercase">{language === 'bn' ? 'এজেন্ট অ্যাকাউন্ট' : 'Agent Account'}</span>
-          </div>
-        )}
-      </div>
+      
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes shimmer {
+          0% { transform: translateX(-100%) skewX(-12deg); }
+          100% { transform: translateX(400%) skewX(-12deg); }
+        }
+        .animate-shimmer {
+          animation: shimmer 2s infinite ease-in-out;
+        }
+      `}} />
     </header>
   );
 };

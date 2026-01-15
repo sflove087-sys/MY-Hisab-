@@ -2,25 +2,52 @@
 import React from 'react';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label: string;
-  prefix?: string;
+  label?: string;
+  prefixIcon?: React.ReactNode;
+  variant?: 'standard' | 'underline';
 }
 
-const Input: React.FC<InputProps> = ({ label, id, prefix, className, ...props }) => {
+const Input: React.FC<InputProps> = ({ label, id, prefixIcon, variant = 'standard', className, ...props }) => {
+  if (variant === 'underline') {
+    return (
+      <div className="mb-6 group">
+        {label && (
+          <label htmlFor={id} className="block text-slate-400 text-[10px] font-bold mb-1 uppercase tracking-widest text-left">
+            {label}
+          </label>
+        )}
+        <div className="relative flex items-center border-b border-slate-300 group-focus-within:border-primary transition-all duration-300 py-2">
+          {prefixIcon && (
+            <span className="mr-3 text-primary opacity-70 group-focus-within:opacity-100 transition-opacity">
+              {prefixIcon}
+            </span>
+          )}
+          <input
+            id={id}
+            className={`appearance-none bg-transparent w-full text-slate-700 leading-tight focus:outline-none font-medium text-lg placeholder-slate-300 ${className}`}
+            {...props}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="mb-5 group">
-      <label htmlFor={id} className="block text-gray-500 dark:text-dark-subtext text-[8px] font-bold mb-2 uppercase tracking-widest transition-colors group-focus-within:text-primary text-center">
-        {label}
-      </label>
+    <div className="mb-4 group">
+      {label && (
+        <label htmlFor={id} className="block text-slate-400 text-[9px] font-black mb-2 uppercase tracking-[0.2em] text-center">
+          {label}
+        </label>
+      )}
       <div className="relative flex items-center">
-        {prefix && (
-          <span className="absolute left-0 pl-5 text-gray-400 dark:text-dark-subtext font-semibold pointer-events-none text-[10px]">
-            {prefix}
+        {prefixIcon && (
+          <span className="absolute left-4 text-primary">
+            {prefixIcon}
           </span>
         )}
         <input
           id={id}
-          className={`appearance-none border-2 border-gray-50 dark:border-gray-800 rounded-2xl w-full py-4 pr-5 text-gray-800 dark:text-dark-text bg-gray-50 dark:bg-dark-surface leading-tight focus:outline-none focus:border-primary/50 dark:focus:border-primary-dark/50 focus:bg-white dark:focus:bg-dark-surface transition-all placeholder-gray-300 dark:placeholder-gray-600 font-medium ${prefix ? 'pl-16' : 'px-5'} ${className}`}
+          className={`appearance-none border border-slate-100 dark:border-dark-border rounded-2xl w-full py-4 text-slate-800 dark:text-dark-text bg-slate-50 dark:bg-dark-surface/50 leading-tight focus:outline-none focus:border-primary focus:bg-white dark:focus:bg-dark-surface transition-all placeholder-slate-300 dark:placeholder-slate-600 font-bold text-center text-base ${prefixIcon ? 'pl-12' : 'px-4'} ${className}`}
           {...props}
         />
       </div>
