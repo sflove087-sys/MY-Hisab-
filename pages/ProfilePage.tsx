@@ -42,10 +42,8 @@ const ProfilePage: React.FC = () => {
             safeStorage.setItem('lastActiveUser', JSON.stringify(parsed));
             
             if (newValue) {
-                // Store "encrypted" (base64 for demo) credential for login
-                // In a real app, this would be a secure token managed by WebAuthn
-                safeStorage.setItem(`biometric_key_${user.mobile}`, btoa(user.password));
-                alert(t('biometricsEnabled'));
+                // Store simulated encrypted credential
+                safeStorage.setItem(`biometric_key_${user.mobile}`, 'AC_SEC_' + btoa(user.password));
             } else {
                 safeStorage.removeItem(`biometric_key_${user.mobile}`);
             }
@@ -74,7 +72,7 @@ const ProfilePage: React.FC = () => {
                 <UserIcon className="w-12 h-12 text-gray-400 dark:text-gray-500" />
               </div>
               <h2 className="text-xl font-bold text-gray-800 dark:text-dark-text">{user?.name}</h2>
-              <p className="text-gray-500 dark:text-dark-subtext text-sm mt-1">{user?.mobile}</p>
+              <p className="text-gray-500 dark:text-dark-subtext text-[10px] font-bold uppercase tracking-widest mt-1">{user?.mobile}</p>
           </div>
       </div>
       
@@ -89,7 +87,7 @@ const ProfilePage: React.FC = () => {
                 </div>
                 <div>
                     <p className="font-bold text-sm text-gray-800 dark:text-dark-text">{t('enableBiometrics')}</p>
-                    <p className="text-[10px] text-gray-500 dark:text-dark-subtext uppercase font-bold tracking-widest">{biometricsEnabled ? 'সক্রিয় আছে' : 'নিষ্ক্রিয় আছে'}</p>
+                    <p className="text-[8px] text-gray-400 dark:text-dark-subtext uppercase font-black tracking-[0.2em]">{biometricsEnabled ? 'সক্রিয় আছে' : 'নিষ্ক্রিয় আছে'}</p>
                 </div>
             </div>
             <button 
@@ -101,7 +99,7 @@ const ProfilePage: React.FC = () => {
         </div>
 
         <div className="bg-white dark:bg-dark-surface p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-dark-border">
-            <h3 className="text-sm font-bold text-gray-700 dark:text-dark-text px-2 mb-3">{t('changeTheme')}</h3>
+            <h3 className="text-[8px] font-black text-gray-400 dark:text-dark-subtext uppercase tracking-[0.3em] px-2 mb-4">{t('changeTheme')}</h3>
             <div className="grid grid-cols-5 gap-3 px-2">
                 {Object.values(themes).map((theme) => (
                     <div key={theme.name} className="flex flex-col items-center cursor-pointer" onClick={() => setColorTheme(theme.name)}>
@@ -111,7 +109,7 @@ const ProfilePage: React.FC = () => {
                         >
                           {colorTheme === theme.name && <div className="w-3 h-3 bg-white rounded-full shadow-inner"></div>}
                         </div>
-                        <span className="text-[9px] text-gray-500 dark:text-dark-subtext mt-1.5 font-semibold">{theme.displayName}</span>
+                        <span className="text-[8px] text-gray-500 dark:text-dark-subtext mt-1.5 font-bold uppercase tracking-tighter">{theme.displayName}</span>
                     </div>
                 ))}
             </div>
@@ -119,17 +117,17 @@ const ProfilePage: React.FC = () => {
 
         <div className="bg-white dark:bg-dark-surface p-2 rounded-2xl shadow-sm border border-gray-100 dark:border-dark-border">
             <div className="flex justify-between items-center p-3">
-                <span className="font-semibold text-sm text-gray-700 dark:text-dark-text">{t('darkMode')}</span>
+                <span className="font-bold text-sm text-gray-700 dark:text-dark-text">{t('darkMode')}</span>
                 <button onClick={toggleMode} className={`w-12 h-6 rounded-full p-1 flex items-center transition-colors ${mode === 'dark' ? 'bg-primary' : 'bg-gray-200 dark:bg-dark-border'}`}>
                     <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${mode === 'dark' ? 'translate-x-6' : 'translate-x-0'}`}></div>
                 </button>
             </div>
             <div className="border-t border-gray-100 dark:border-dark-border/50 mx-3"></div>
             <div className="flex justify-between items-center p-3">
-                <span className="font-semibold text-sm text-gray-700 dark:text-dark-text">{t('language')}</span>
+                <span className="font-bold text-sm text-gray-700 dark:text-dark-text">{t('language')}</span>
                 <div className="flex border border-gray-200 dark:border-dark-border rounded-lg overflow-hidden h-7">
-                    <button onClick={() => language !== 'bn' && toggleLanguage()} className={`px-3 text-[10px] font-bold ${language === 'bn' ? 'bg-primary text-white' : 'bg-transparent text-gray-500'}`}>বাংলা</button>
-                    <button onClick={() => language !== 'en' && toggleLanguage()} className={`px-3 text-[10px] font-bold ${language === 'en' ? 'bg-primary text-white' : 'bg-transparent text-gray-500'}`}>ENG</button>
+                    <button onClick={() => language !== 'bn' && toggleLanguage()} className={`px-3 text-[10px] font-black ${language === 'bn' ? 'bg-primary text-white' : 'bg-transparent text-gray-400'}`}>বাংলা</button>
+                    <button onClick={() => language !== 'en' && toggleLanguage()} className={`px-3 text-[10px] font-black ${language === 'en' ? 'bg-primary text-white' : 'bg-transparent text-gray-400'}`}>ENG</button>
                 </div>
             </div>
              <div className="border-t border-gray-100 dark:border-dark-border/50 mx-3"></div>
@@ -137,13 +135,13 @@ const ProfilePage: React.FC = () => {
               onClick={() => navigate('/change-password')}
               className="w-full text-left p-3 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-dark-bg/50 rounded-lg transition-colors"
             >
-              <span className="font-semibold text-sm text-gray-700 dark:text-dark-text">{t('changePin')}</span>
-              <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
+              <span className="font-bold text-sm text-gray-700 dark:text-dark-text">{t('changePin')}</span>
+              <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" /></svg>
             </button>
         </div>
 
         <div className="pt-4">
-             <button onClick={logout} className="w-full py-3 bg-red-50 dark:bg-red-500/10 text-red-500 dark:text-red-400 font-bold text-sm rounded-xl hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors">
+             <button onClick={logout} className="w-full py-4 bg-red-50 dark:bg-red-500/10 text-red-500 dark:text-red-400 font-black text-xs uppercase tracking-[0.3em] rounded-2xl hover:bg-red-100 dark:hover:bg-red-500/20 transition-all active:scale-95">
                 {t('logout')}
              </button>
         </div>

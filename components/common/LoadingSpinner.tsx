@@ -32,26 +32,6 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
             <div className={`w-2 h-2 rounded-full ${color} opacity-50`}></div>
         </div>
       </div>
-      
-      {label && (
-        <p className={`mt-6 text-sm font-black uppercase tracking-[0.2em] animate-pulse ${color}`}>
-          {label}
-        </p>
-      )}
-      
-      <div className="mt-6 w-32 h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-        <div className="h-full bg-gradient-to-r from-primary via-pink-400 to-primary animate-progress-slide"></div>
-      </div>
-
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes progress-slide {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-        .animate-progress-slide {
-          animation: progress-slide 1.5s infinite ease-in-out;
-        }
-      `}} />
     </div>
   );
 };

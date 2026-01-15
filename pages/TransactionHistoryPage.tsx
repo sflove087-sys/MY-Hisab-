@@ -120,7 +120,6 @@ const TransactionHistoryPage: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh]">
         <LoadingSpinner />
-        <p className="mt-4 text-gray-500 dark:text-dark-subtext font-medium animate-pulse">{t('loading')}</p>
       </div>
     );
   }
