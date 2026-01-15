@@ -107,7 +107,8 @@ function getUserByMobile(mobile, type) {
   const normTarget = normalizeMobile(mobile);
   const user = users.find(u => normalizeMobile(u.mobile) === normTarget && (type ? u.type === type : true));
   if (user) {
-    delete user.password; // Security
+    // Note: We keep password for transactions but don't return it here for security of lookups
+    delete user.password; 
     return user;
   }
   return { error: 'User not found' };
@@ -150,19 +151,26 @@ function loginUser(loginIdentifier, password) {
   const users = sheetToJSON(sheet); 
   let user;
 
+  const findUser = (u) => {
+    // Pad the stored password to 4 digits with leading zeros.
+    const storedPassword = String(u.password).padStart(4, '0');
+    return storedPassword === password;
+  };
+
   if (String(loginIdentifier).includes('@')) {
     // Email login
-    user = users.find(u => u.email.trim().toLowerCase() === String(loginIdentifier).trim().toLowerCase() && u.password === password);
+    user = users.find(u => u.email.trim().toLowerCase() === String(loginIdentifier).trim().toLowerCase() && findUser(u));
   } else {
     // Mobile login
     const normIdentifier = normalizeMobile(loginIdentifier);
-    user = users.find(u => normalizeMobile(u.mobile) === normIdentifier && u.password === password);
+    user = users.find(u => normalizeMobile(u.mobile) === normIdentifier && findUser(u));
   }
 
   if (user) {
     user.balance = parseFloat(user.balance) || 0;
     user.commission = parseFloat(user.commission) || 0;
-    delete user.password; // Security: Never send password to client
+    // We NO LONGER delete password here so frontend local validation works.
+    // In a production app, we would use a token-based system.
   }
   return user || null;
 }
@@ -177,7 +185,7 @@ function addUser(name, mobile, email, password) {
     if (findUserRowIndexByMobile(usersData, usersDisplayData, mobile) !== -1) return { status: 'Failed', error: 'Mobile exists.' };
     const newId = `user_${new Date().getTime()}`;
     usersSheet.appendRow([newId, name, `'${mobile}`, email, `'${password}`, 0, 'Personal', 0]);
-    return { status: 'Success', user: { id: newId, name: name, mobile: mobile, email: email, balance: 0, type: 'Personal' } };
+    return { status: 'Success', user: { id: newId, name: name, mobile: mobile, email: email, balance: 0, type: 'Personal', password: password } };
   });
 }
 
@@ -189,7 +197,7 @@ function getUserById(id) {
   if (user) {
     user.balance = parseFloat(user.balance) || 0;
     user.commission = parseFloat(user.commission) || 0;
-    delete user.password; // Security: Never send password to client
+    // We NO LONGER delete password here to maintain local session consistency.
   }
   return user || null;
 }
@@ -232,7 +240,10 @@ function changePassword(userId, oldPassword, newPassword) {
     const passIdx = headers.indexOf('password');
     const userRowIndex = usersData.findIndex(row => row[headers.indexOf('id')] == userId);
     if (userRowIndex === -1) return { status: 'Failed', error: "User not found" };
-    if (usersDisplayData[userRowIndex][passIdx] !== oldPassword) return { status: 'Failed', error: "Incorrect password" };
+
+    const storedPassword = String(usersDisplayData[userRowIndex][passIdx]).padStart(4, '0');
+    if (storedPassword !== oldPassword) return { status: 'Failed', error: "Incorrect password" };
+    
     usersSheet.getRange(userRowIndex + 1, passIdx + 1).setValue(`'${newPassword}`);
     return { status: 'Success' };
   });
@@ -315,7 +326,9 @@ function approveCashOutRequest(userId, transactionId, pin) {
     
     const userRowIndex = usersData.findIndex(row => row[headers.indexOf('id')] == userId);
     if (userRowIndex === -1) return { status: 'Failed', error: "User not found" };
-    if (usersDisplayData[userRowIndex][headers.indexOf('password')] !== pin) return { status: 'Failed', error: "Incorrect PIN" };
+
+    const storedPin = String(usersDisplayData[userRowIndex][headers.indexOf('password')]).padStart(4, '0');
+    if (storedPin !== pin) return { status: 'Failed', error: "Incorrect PIN" };
 
     const txSheet = getOrCreateSheet(ss, TRANSACTIONS_SHEET_NAME);
     const txData = txSheet.getDataRange().getValues();

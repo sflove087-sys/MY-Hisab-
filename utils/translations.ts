@@ -64,6 +64,7 @@ export const translations = {
     mobileRecharge: 'Recharge',
     payment: 'Payment',
     addMoney: 'Add Money',
+    balanceInquiry: 'Balance Inquiry',
 
     // Send Money
     sendMoneyTitle: 'Send Money',
@@ -179,6 +180,7 @@ export const translations = {
     mobileRecharge: 'মোবাইল রিচার্জ',
     payment: 'পেমেন্ট',
     addMoney: 'অ্যাড মানি',
+    balanceInquiry: 'ব্যালেন্স অনুসন্ধান',
     
     // Send Money
     sendMoneyTitle: 'সেন্ড মানি',

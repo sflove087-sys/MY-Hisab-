@@ -4,10 +4,20 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import Logo from '../components/Logo';
-import { UserIcon } from '../components/Icons';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
 import { safeStorage } from '../utils/storage';
+
+// Helper to get initials from a name
+const getInitials = (name: string = ''): string => {
+  const names = name.split(' ').filter(Boolean);
+  if (names.length === 0) return '';
+  if (names.length === 1) {
+    return names[0].charAt(0).toUpperCase();
+  }
+  return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
+};
+
 
 const LoginPage: React.FC = () => {
   const [lastActiveUser, setLastActiveUser] = useState<{name: string; mobile: string} | null>(null);
@@ -25,10 +35,11 @@ const LoginPage: React.FC = () => {
       if (storedUser) {
         const parsedUser = JSON.parse(storedUser);
         setLastActiveUser(parsedUser);
+        setLoginIdentifier(parsedUser.mobile);
       }
     } catch (e) {
       console.error("Failed to parse last active user:", e);
-      safeStorage.removeItem('lastActiveUser'); // Clear corrupted data
+      safeStorage.removeItem('lastActiveUser');
     }
   }, []);
 
@@ -37,25 +48,15 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
     setError('');
 
-    // If a remembered user exists, use their mobile number for login.
-    // Otherwise, use the value from the text input field.
-    const identifierToUse = lastActiveUser ? lastActiveUser.mobile : loginIdentifier;
-
-    if (!identifierToUse || !password) {
+    if (!loginIdentifier || !password) {
       setError(language === 'bn' ? 'মোবাইল/ইমেল এবং পিন দিন।' : 'Please enter mobile/email and PIN.');
       setIsLoading(false);
       return;
     }
 
     try {
-      const user = await login(identifierToUse, password);
-      if (user) {
-        // If login was for a different user (via switch account), update UI.
-        // Persistence is handled by the login function in AuthContext.
-        if (!lastActiveUser || lastActiveUser.mobile !== user.mobile) {
-            setLastActiveUser({ name: user.name, mobile: user.mobile });
-        }
-      } else {
+      const user = await login(loginIdentifier, password);
+      if (!user) {
         setError(language === 'bn' ? 'মোবাইল/ইমেল বা পিন ভুল।' : 'Incorrect mobile/email or PIN.');
       }
     } catch (err) {
@@ -74,104 +75,104 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-dark-bg flex flex-col overflow-hidden">
-        {/* Header with Wave */}
-        <header className="relative bg-primary text-white p-6 pt-10 text-center shadow-lg">
-            <div className="absolute top-4 right-4 z-20">
-                <div className="flex border border-white/20 rounded-lg overflow-hidden h-7 backdrop-blur-sm bg-white/10">
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-bg flex flex-col items-center justify-between p-6 pt-12 overflow-hidden">
+        
+        {/* Top Content: Logo and Title */}
+        <div className="w-full max-w-sm text-center animate-in fade-in slide-in-from-top-10 duration-500">
+            <Logo className="w-20 h-20 mx-auto" />
+            <h1 className="text-3xl font-black text-gray-800 dark:text-dark-text mt-4 tracking-tighter">
+                {lastActiveUser ? (language === 'bn' ? 'স্বাগতম' : 'Welcome Back') : t('loginTitle')}
+            </h1>
+            <p className="text-gray-500 dark:text-dark-subtext mt-1 h-5">
+                {lastActiveUser ? lastActiveUser.name : (language === 'bn' ? 'আপনার অ্যাকাউন্টে লগইন করুন' : 'Login to your account')}
+            </p>
+        </div>
+
+        {/* Middle Content: Form */}
+        <div className="w-full max-w-sm my-8 animate-in fade-in duration-700">
+            {error && (
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 text-red-600 dark:text-red-400 p-3 rounded-2xl mb-6 text-xs text-center font-bold">
+                    {error}
+                </div>
+            )}
+
+            <form onSubmit={handleLoginSubmit} className="space-y-4">
+                {lastActiveUser ? (
+                    <div className="flex flex-col items-center text-center -mt-8 mb-4">
+                        <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-4 border-4 border-white dark:border-dark-bg shadow-md">
+                            <span className="text-4xl font-bold text-primary">{getInitials(lastActiveUser.name)}</span>
+                        </div>
+                         <p className="text-sm font-bold text-gray-500 dark:text-dark-subtext">{lastActiveUser.mobile}</p>
+                    </div>
+                ) : (
+                    <Input 
+                        label={t('mobileOrEmail')}
+                        id="loginIdentifier"
+                        type="text" 
+                        value={loginIdentifier}
+                        onChange={(e) => setLoginIdentifier(e.target.value)}
+                        placeholder="01... or you@example.com"
+                        required
+                    />
+                )}
+
+                <Input 
+                    label={t('pin')}
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value.replace(/[^0-9]/g, ''))}
+                    maxLength={4}
+                    inputMode="numeric"
+                    placeholder="••••"
+                    required
+                    autoFocus={!!lastActiveUser}
+                    className="text-center text-3xl tracking-[1em] font-mono"
+                />
+                
+                <Button 
+                    type="submit"
+                    disabled={isLoading}
+                    isLoading={isLoading}
+                    className="mt-6"
+                >
+                    {t('login')}
+                </Button>
+            </form>
+        </div>
+
+        {/* Bottom Content: Links & Language */}
+        <div className="w-full max-w-sm text-center animate-in fade-in slide-in-from-bottom-10 duration-500">
+            {lastActiveUser ? (
+                <button onClick={handleSwitchAccount} className="font-bold text-primary dark:text-primary-dark hover:underline text-sm">
+                    {t('switchAccount')}
+                </button>
+            ) : (
+                <p className="text-sm text-gray-500 dark:text-dark-subtext">
+                    {t('noAccountPrompt')}{' '}
+                    <Link to="/signup" className="font-bold text-primary hover:underline">
+                        {t('register')}
+                    </Link>
+                </p>
+            )}
+
+            <div className="mt-6">
+                <div className="inline-flex border border-gray-200 dark:border-dark-border rounded-lg overflow-hidden h-7 backdrop-blur-sm bg-white/50 dark:bg-dark-surface/50">
                     <button 
                         onClick={() => language !== 'bn' && toggleLanguage()}
-                        className={`px-3 text-[9px] font-bold transition-colors ${language === 'bn' ? 'bg-white text-primary' : 'bg-transparent text-white/80'}`}
+                        className={`px-4 text-[9px] font-bold transition-colors ${language === 'bn' ? 'bg-primary text-white' : 'bg-transparent text-gray-500 dark:text-dark-subtext'}`}
                     >
-                        বাং
+                        বাংলা
                     </button>
                     <button 
                         onClick={() => language !== 'en' && toggleLanguage()}
-                        className={`px-3 text-[9px] font-bold transition-colors ${language === 'en' ? 'bg-white text-primary' : 'bg-transparent text-white/80'}`}
+                        className={`px-4 text-[9px] font-bold transition-colors ${language === 'en' ? 'bg-primary text-white' : 'bg-transparent text-gray-500 dark:text-dark-subtext'}`}
                     >
                         ENG
                     </button>
                 </div>
             </div>
-
-            <Logo className="w-14 h-14 mx-auto mb-2 drop-shadow-md" />
-            <h1 className="text-2xl font-black tracking-tighter drop-shadow-sm">আমার ক্যাশ</h1>
-            
-            <div className="absolute -bottom-px left-0 w-full h-16">
-              <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
-                <path d="M0,100 C25,50 75,50 100,100 L100,100 L0,100 Z" className="fill-current text-gray-50 dark:text-dark-bg"></path>
-              </svg>
-            </div>
-        </header>
-
-        <main className="flex-grow flex flex-col p-6 animate-in fade-in duration-500">
-            <div className="flex-grow">
-                {error && (
-                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 text-red-600 dark:text-red-400 p-3 rounded-2xl mb-6 text-xs text-center font-bold">
-                        {error}
-                    </div>
-                )}
-
-                <form onSubmit={handleLoginSubmit} className="space-y-4">
-                    {lastActiveUser ? (
-                        <div className="text-center mb-6">
-                            <div className="w-20 h-20 bg-gray-100 dark:bg-dark-surface rounded-full flex items-center justify-center mb-3 border-4 border-white dark:border-dark-bg shadow-md mx-auto">
-                                <UserIcon className="w-12 h-12 text-gray-400 dark:text-gray-500" />
-                            </div>
-                            <h2 className="text-lg font-bold text-gray-800 dark:text-dark-text">{lastActiveUser.name}</h2>
-                            <p className="text-sm text-gray-500 dark:text-dark-subtext">{lastActiveUser.mobile}</p>
-                        </div>
-                    ) : (
-                        <Input 
-                            label={t('mobileOrEmail')}
-                            id="loginIdentifier"
-                            type="text" 
-                            value={loginIdentifier}
-                            onChange={(e) => setLoginIdentifier(e.target.value)}
-                            placeholder="01... or you@example.com"
-                            required
-                        />
-                    )}
-
-                    <Input 
-                        label={t('pin')}
-                        id="password"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        maxLength={4}
-                        inputMode="numeric"
-                        placeholder="••••"
-                        required
-                        autoFocus={!!lastActiveUser}
-                    />
-                    
-                    <Button 
-                        type="submit"
-                        disabled={isLoading}
-                        isLoading={isLoading}
-                        className="mt-4"
-                    >
-                        {t('login')}
-                    </Button>
-                </form>
-            </div>
-
-            <div className="mt-auto text-center pt-6">
-                {lastActiveUser ? (
-                    <button onClick={handleSwitchAccount} className="font-bold text-primary dark:text-primary-dark hover:underline text-sm">
-                        {t('switchAccount')}
-                    </button>
-                ) : (
-                    <p className="text-sm text-gray-500 dark:text-dark-subtext">
-                        {t('noAccountPrompt')}{' '}
-                        <Link to="/signup" className="font-bold text-primary hover:underline">
-                            {t('register')}
-                        </Link>
-                    </p>
-                )}
-            </div>
-        </main>
+        </div>
     </div>
   );
 };

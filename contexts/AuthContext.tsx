@@ -1,5 +1,5 @@
 
-import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect } from 'react';
 import { User } from '../types';
 import { googleSheetService } from '../services/googleSheetService';
 import { safeStorage } from '../utils/storage';
@@ -17,7 +17,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(() => {
     try {
       const savedUser = safeStorage.getItem('user');
-      return savedUser ? JSON.parse(savedUser) : null;
+      if (savedUser && savedUser !== 'null' && savedUser !== 'undefined') {
+        return JSON.parse(savedUser);
+      }
+      return null;
     } catch (error) {
       console.error("Failed to load user from safeStorage:", error);
       safeStorage.removeItem('user');
@@ -27,7 +30,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const login = async (identifier: string, password: string): Promise<User | null> => {
     const loggedInUser = await googleSheetService.loginUser(identifier, password);
-    if (loggedInUser) {
+    if (loggedInUser && !('error' in loggedInUser)) {
       setUser(loggedInUser);
       safeStorage.setItem('user', JSON.stringify(loggedInUser));
       try {
@@ -36,13 +39,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } catch (error) {
         console.error("Failed to save last active user:", error);
       }
+      return loggedInUser;
     }
-    return loggedInUser;
+    return null;
   };
 
   const logout = () => {
     setUser(null);
-    // Remove the session, but keep the last active user for the login screen.
     safeStorage.removeItem('user');
   };
   
@@ -50,15 +53,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (user) {
       try {
         const refreshedUser = await googleSheetService.getUserById(user.id);
-        if (refreshedUser) {
+        if (refreshedUser && !('error' in refreshedUser)) {
           setUser(refreshedUser);
           safeStorage.setItem('user', JSON.stringify(refreshedUser));
         }
       } catch (error) {
         console.error("Failed to refresh user data:", error);
-        // Optional: handle user refresh failure, e.g., by logging them out
-        // logout();
       }
+    }
+  }, [user]);
+
+  // Sync state to storage whenever it changes (as an extra layer of protection)
+  useEffect(() => {
+    if (user) {
+      safeStorage.setItem('user', JSON.stringify(user));
     }
   }, [user]);
 
