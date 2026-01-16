@@ -24,12 +24,12 @@ const AgentCashOutPage: React.FC = () => {
 
   useEffect(() => {
     const timer = setTimeout(async () => {
-      if (customerMobile.length === 10) {
+      if (customerMobile.length === 11) {
         setIsVerifying(true);
         setError('');
         try {
-          const result = await googleSheetService.getUserByMobile(`0${customerMobile}`, 'Personal');
-          if ('name' in result) {
+          const result = await googleSheetService.getUserByMobile(customerMobile, 'Personal');
+          if (result && 'name' in result) {
             setCustomerName(result.name);
           } else {
             setError('গ্রাহক খুঁজে পাওয়া যায়নি।');
@@ -68,7 +68,7 @@ const AgentCashOutPage: React.FC = () => {
   const handleFinalTransaction = async () => {
     setIsLoading(true);
     try {
-      const result = await googleSheetService.requestAgentCashOut(user!.id, `0${customerMobile}`, parseFloat(amount));
+      const result = await googleSheetService.requestAgentCashOut(user!.id, customerMobile, parseFloat(amount));
       if (result && result.status === 'Success') {
         setIsSuccessModalOpen(true);
       } else {
@@ -104,11 +104,10 @@ const AgentCashOutPage: React.FC = () => {
                   label={t('customerMobile')} 
                   type="tel" 
                   value={customerMobile} 
-                  onChange={(e) => setCustomerMobile(e.target.value)}
-                  placeholder="1XXXXXXXXX"
+                  onChange={(e) => setCustomerMobile(e.target.value.replace(/[^0-9]/g, ''))}
+                  placeholder="01XXXXXXXXX"
                   required
-                  prefix="+880"
-                  maxLength={10}
+                  maxLength={11}
                 />
                 {isVerifying && <div className="absolute right-4 bottom-4"><div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full"></div></div>}
                 {customerName && <p className="text-xs text-primary font-bold mt-1 px-1">✓ গ্রাহক: {customerName}</p>}
@@ -140,7 +139,7 @@ const AgentCashOutPage: React.FC = () => {
                       <span className="text-sm font-bold text-gray-400 dark:text-dark-subtext">গ্রাহক</span>
                       <div className="text-right">
                           <p className="text-sm font-bold text-gray-800 dark:text-white">{customerName}</p>
-                          <p className="text-xs text-gray-400 dark:text-dark-subtext">+880 {customerMobile}</p>
+                          <p className="text-xs text-gray-400 dark:text-dark-subtext">{customerMobile}</p>
                       </div>
                   </div>
                   <div className="flex justify-between items-center border-t border-gray-200 dark:border-dark-border pt-4">

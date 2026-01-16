@@ -16,23 +16,25 @@ const TapAndHoldButton: React.FC<TapAndHoldButtonProps> = ({ onComplete, isLoadi
   const completedRef = useRef(false);
   const { t } = useLanguage();
 
-  const HOLD_DURATION = 2200; // 2.2 seconds for a deliberate feel
+  const HOLD_DURATION = 1800; // Reduced to 1.8 seconds for better UX
 
   const cleanupTimer = () => {
     if (timerRef.current) {
-      clearInterval(timerRef.current);
+      window.clearInterval(timerRef.current);
       timerRef.current = null;
     }
   };
 
-  useEffect(() => {
-    if (!isLoading && completedRef.current) {
-      completedRef.current = false;
-      setProgress(0);
+  const startHolding = (e: React.MouseEvent | React.TouchEvent) => {
+    // Prevent default context menu or scrolling behavior while holding
+    if (e.cancelable) {
+      // We don't preventDefault on mousedown to allow focus, but we do on touch
+      if ('touches' in e) {
+        // Only prevent if it's a touch event to stop scrolling
+        // e.preventDefault(); // Removed to allow button interaction, handled via CSS
+      }
     }
-  }, [isLoading]);
 
-  const startHolding = () => {
     if (isLoading || isHolding) return;
     
     completedRef.current = false;
@@ -47,29 +49,40 @@ const TapAndHoldButton: React.FC<TapAndHoldButtonProps> = ({ onComplete, isLoadi
       if (newProgress >= 100 && !completedRef.current) {
         completedRef.current = true;
         cleanupTimer();
-        // Visual "pop" on completion
-        const vibrate = window.navigator.vibrate;
-        if (vibrate) vibrate([50, 30, 50]);
+        
+        // Immediate haptic feedback
+        if (window.navigator.vibrate) {
+          window.navigator.vibrate([70, 40, 70]);
+        }
+        
         onComplete();
+        // Keep progress at 100 during loading to show success state
         setIsHolding(false);
       }
-    }, 16); // ~60fps
+    }, 16);
   };
 
   const stopHolding = () => {
+    if (completedRef.current) return;
+    
     setIsHolding(false);
     cleanupTimer();
-    if (!completedRef.current) {
-        setProgress(0);
-    }
+    setProgress(0);
   };
+
+  // Reset progress if loading finishes and it wasn't successful
+  useEffect(() => {
+    if (!isLoading && !isHolding && progress === 100 && !completedRef.current) {
+      setProgress(0);
+    }
+  }, [isLoading, isHolding, progress]);
 
   useEffect(() => {
     return () => cleanupTimer();
   }, []);
 
   return (
-    <div className="w-full relative select-none">
+    <div className="w-full relative select-none touch-none">
       <button
         onMouseDown={startHolding}
         onMouseUp={stopHolding}
@@ -77,7 +90,8 @@ const TapAndHoldButton: React.FC<TapAndHoldButtonProps> = ({ onComplete, isLoadi
         onTouchStart={startHolding}
         onTouchEnd={stopHolding}
         disabled={isLoading}
-        className={`w-full h-16 bg-gray-100 dark:bg-dark-surface rounded-[1.5rem] overflow-hidden relative transition-all duration-300 active:scale-[0.96] shadow-inner-sm border border-gray-200 dark:border-dark-border ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}
+        className={`w-full h-16 bg-gray-100 dark:bg-dark-surface rounded-[1.5rem] overflow-hidden relative transition-all duration-300 active:scale-[0.98] shadow-inner border border-gray-200 dark:border-dark-border ${isLoading ? 'opacity-70 pointer-events-none' : ''} touch-none`}
+        style={{ WebkitUserSelect: 'none', WebkitTouchCallout: 'none' }}
       >
         {/* Futuristic Grid Background Layer */}
         <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
@@ -89,20 +103,17 @@ const TapAndHoldButton: React.FC<TapAndHoldButtonProps> = ({ onComplete, isLoadi
 
         {/* The Filling "Liquid" Layer */}
         <div 
-          className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary via-primary to-orange-400 transition-all duration-75 ease-out shadow-[0_0_30px_rgba(241,77,35,0.4)]"
+          className={`absolute top-0 left-0 h-full bg-gradient-to-r from-primary via-primary to-orange-400 transition-all duration-75 ease-out shadow-[0_0_30px_rgba(241,77,35,0.4)] ${progress === 0 ? 'opacity-0' : 'opacity-100'}`}
           style={{ width: `${progress}%` }}
         >
-            {/* Animated Light Sheen on progress head */}
             <div className="absolute right-0 top-0 bottom-0 w-8 bg-white/30 blur-md skew-x-12 animate-pulse"></div>
-            
-            {/* Bubble Particles (Simulated with simple spans) */}
             <div className={`absolute right-2 top-1/2 -translate-y-1/2 flex space-x-1 ${isHolding ? 'opacity-100' : 'opacity-0'}`}>
-                <div className="w-1 h-1 bg-white rounded-full animate-ping [animation-duration:1s]"></div>
+                <div className="w-1 h-1 bg-white rounded-full animate-ping"></div>
                 <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping [animation-duration:1.5s]"></div>
             </div>
         </div>
         
-        {/* Scanning Line (Active when holding) */}
+        {/* Scanning Line */}
         {isHolding && (
             <div 
                 className="absolute top-0 bottom-0 w-0.5 bg-white/50 z-20 shadow-[0_0_15px_#fff]"
@@ -145,21 +156,6 @@ const TapAndHoldButton: React.FC<TapAndHoldButtonProps> = ({ onComplete, isLoadi
               <span>বাতিল করতে ছেড়ে দিন</span>
           </div>
       )}
-
-      {/* Finishing Celebration Sparkle (Hidden by default) */}
-      {progress === 100 && (
-          <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">
-               <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
-          </div>
-      )}
-
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes liquid-fill {
-          0% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
-          50% { border-radius: 60% 40% 30% 70% / 50% 60% 50% 40%; }
-          100% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
-        }
-      `}} />
     </div>
   );
 };

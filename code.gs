@@ -107,7 +107,6 @@ function getUserByMobile(mobile, type) {
   const normTarget = normalizeMobile(mobile);
   const user = users.find(u => normalizeMobile(u.mobile) === normTarget && (type ? u.type === type : true));
   if (user) {
-    // Note: We keep password for transactions but don't return it here for security of lookups
     delete user.password; 
     return user;
   }
@@ -152,16 +151,13 @@ function loginUser(loginIdentifier, password) {
   let user;
 
   const findUser = (u) => {
-    // Pad the stored password to 4 digits with leading zeros.
     const storedPassword = String(u.password).padStart(4, '0');
     return storedPassword === password;
   };
 
   if (String(loginIdentifier).includes('@')) {
-    // Email login
     user = users.find(u => u.email.trim().toLowerCase() === String(loginIdentifier).trim().toLowerCase() && findUser(u));
   } else {
-    // Mobile login
     const normIdentifier = normalizeMobile(loginIdentifier);
     user = users.find(u => normalizeMobile(u.mobile) === normIdentifier && findUser(u));
   }
@@ -169,7 +165,6 @@ function loginUser(loginIdentifier, password) {
   if (user) {
     user.balance = parseFloat(user.balance) || 0;
     user.commission = parseFloat(user.commission) || 0;
-    // Normalize password before returning to frontend
     user.password = String(user.password).padStart(4, '0');
   }
   return user || null;
@@ -197,7 +192,6 @@ function getUserById(id) {
   if (user) {
     user.balance = parseFloat(user.balance) || 0;
     user.commission = parseFloat(user.commission) || 0;
-    // Normalize password before returning to frontend
     user.password = String(user.password).padStart(4, '0');
   }
   return user || null;
@@ -282,15 +276,21 @@ function performCashOut(fromUserId, agentMobile, amount) {
         const usersDisplayData = usersSheet.getDataRange().getDisplayValues();
         const headers = usersData[0];
         const balIdx = headers.indexOf('balance');
-        const commIdx = headers.indexOf('commission');
         const fromUserRowIndex = usersData.findIndex(row => row[headers.indexOf('id')] == fromUserId);
         const agentRowIndex = findUserRowIndexByMobile(usersData, usersDisplayData, agentMobile, 'Agent');
-        if (fromUserRowIndex === -1 || agentRowIndex === -1) return { error: "User or Agent not found" };
+        
+        if (fromUserRowIndex === -1) return { error: "User not found" };
+        if (agentRowIndex === -1) return { error: "Agent not found" };
+        
+        const totalToDeduct = amount; // Charge removed
         const fromUserBalance = parseFloat(usersData[fromUserRowIndex][balIdx]);
-        if (fromUserBalance < amount) return { error: "Insufficient balance" };
+        
+        if (fromUserBalance < totalToDeduct) return { error: "Insufficient balance" };
+        
         const agentBalance = parseFloat(usersData[agentRowIndex][balIdx]);
-        usersSheet.getRange(fromUserRowIndex + 1, balIdx + 1).setValue(fromUserBalance - amount);
+        usersSheet.getRange(fromUserRowIndex + 1, balIdx + 1).setValue(fromUserBalance - totalToDeduct);
         usersSheet.getRange(agentRowIndex + 1, balIdx + 1).setValue(agentBalance + amount);
+        
         getOrCreateSheet(ss, TRANSACTIONS_SHEET_NAME).appendRow([
             `txn_${new Date().getTime()}`, 'Cash Out', amount, usersData[fromUserRowIndex][headers.indexOf('id')], usersData[agentRowIndex][headers.indexOf('id')],
             usersData[fromUserRowIndex][headers.indexOf('name')], usersData[agentRowIndex][headers.indexOf('name')], new Date().toISOString(), 'Success'
@@ -342,16 +342,17 @@ function approveCashOutRequest(userId, transactionId, pin) {
     if (tx[txHeaders.indexOf('from')] !== userId) return { status: 'Failed', error: "User is not authorized to approve this" };
 
     const amount = parseFloat(tx[txHeaders.indexOf('amount')]);
+    const totalDeduction = amount; // Charge removed
     const userBalance = parseFloat(usersData[userRowIndex][headers.indexOf('balance')]);
-    if (userBalance < amount) return { status: 'Failed', error: "Insufficient balance" };
+    
+    if (userBalance < totalDeduction) return { status: 'Failed', error: "Insufficient balance" };
 
     const agentId = tx[txHeaders.indexOf('to')];
     const agentRowIndex = usersData.findIndex(row => row[headers.indexOf('id')] == agentId);
     if (agentRowIndex === -1) return { status: 'Failed', error: "Agent not found" };
     const agentBalance = parseFloat(usersData[agentRowIndex][headers.indexOf('balance')]);
     
-    // Perform transaction
-    usersSheet.getRange(userRowIndex + 1, headers.indexOf('balance') + 1).setValue(userBalance - amount);
+    usersSheet.getRange(userRowIndex + 1, headers.indexOf('balance') + 1).setValue(userBalance - totalDeduction);
     usersSheet.getRange(agentRowIndex + 1, headers.indexOf('balance') + 1).setValue(agentBalance + amount);
     txSheet.getRange(txRowIndex + 1, txHeaders.indexOf('status') + 1).setValue('Success');
 

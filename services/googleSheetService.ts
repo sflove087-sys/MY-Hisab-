@@ -1,7 +1,7 @@
 
 import { User, UserType, Transaction, TransactionType, TransactionStatus } from '../types';
 
-const GOOGLE_SHEET_API_URL: string = 'https://script.google.com/macros/s/AKfycby38duiRf29kPW_DHkwVSdhmHUZwZ98yx42EkceCLj2N6sfZ3cGUIg6jiJRAxWNqHI_/exec';
+const GOOGLE_SHEET_API_URL: string = 'https://script.google.com/macros/s/AKfycbx6n0NmzUbrMBk9X9tL3Dwnh1iH1TOCtrV7Z1vBFXyuc1kbg2H1t4o7nQzm98Da-eQP/exec';
 
 class GoogleSheetService {
 
@@ -73,15 +73,16 @@ class GoogleSheetService {
   }
   
   async performCashOut(fromUserId: string, agentMobile: string, amount: number): Promise<{status: string; error?: string} | null> {
-    return this.apiFetch({ action: 'performCashOut', fromUserId, agentMobile, amount });
+    // Ensure amount is a precise number for URL parameters
+    return this.apiFetch({ action: 'performCashOut', fromUserId, agentMobile, amount: Number(amount) });
   }
   
   async performCashIn(agentId: string, customerMobile: string, amount: number): Promise<{status: string; error?: string} | null> {
-    return this.apiFetch({ action: 'performCashIn', agentId, customerMobile, amount });
+    return this.apiFetch({ action: 'performCashIn', agentId, customerMobile, amount: Number(amount) });
   }
 
   async requestAgentCashOut(agentId: string, customerMobile: string, amount: number): Promise<{status: string; error?: string} | null> {
-    return this.apiFetch({ action: 'requestAgentCashOut', agentId, customerMobile, amount });
+    return this.apiFetch({ action: 'requestAgentCashOut', agentId, customerMobile, amount: Number(amount) });
   }
 
   async approveCashOutRequest(userId: string, transactionId: string, pin: string): Promise<{status: string; error?: string} | null> {
